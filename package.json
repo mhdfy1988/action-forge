@@ -1,0 +1,16 @@
+{
+  "name": "action-forge",
+  "description": "动作工坊：从视频抽帧、抠图精修到2D游戏动作资产",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:icons": "node scripts/build-icons.mjs",
+    "test": "node --test tests/web/*.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "lucide-static": "1.52.0"
+  }
+}
