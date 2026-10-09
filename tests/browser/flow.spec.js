@@ -23,9 +23,8 @@ async function singleScreen(page){
       if(box.bottom>grid.bottom+1 || box.right>grid.right+1)issues.push('帧卡片溢出网格');
       if(frame.querySelector('img').getBoundingClientRect().height<35)issues.push('缩略图高度过小');
     }
-    const meta=document.querySelector('#result-meta').getBoundingClientRect();
     const actions=document.querySelector('.topbar-actions').getBoundingClientRect();
-    if(actions.right>innerWidth+1)issues.push('顶部导出溢出');
+    if(actions.right>innerWidth+1)issues.push('顶部状态区溢出');
     return issues;
   });
   expect(issues).toEqual([]);

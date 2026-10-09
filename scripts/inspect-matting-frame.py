@@ -13,7 +13,9 @@ parser.add_argument('result', type=Path)
 parser.add_argument('output', type=Path)
 parser.add_argument('--compare-engine', action='store_true')
 args = parser.parse_args()
-root = Path(__file__).resolve().parents[2] / 'game-art-matting'
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from model_config import resolve_model_runtime
+root = resolve_model_runtime().root
 sys.path.insert(0, str(root))
 from app.refinement import background_statistics
 

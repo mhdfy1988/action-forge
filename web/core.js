@@ -7,15 +7,6 @@ export function formatTime(seconds) {
   const ms = Math.round(Math.max(0,seconds) * 1000);
   return `${String(Math.floor(ms / 60000)).padStart(2,'0')}:${String(Math.floor(ms / 1000) % 60).padStart(2,'0')}.${String(ms % 1000).padStart(3,'0')}`;
 }
-export function frameAt(sequence, elapsedMs) {
-  let boundary = 0;
-  for (let index = 0; index < sequence.frames.length; index++) {
-    boundary += sequence.frames[index].durationMs;
-    if (elapsedMs < boundary) return index;
-  }
-  return sequence.frames.length - 1;
-}
-
 // 预览时钟只管理图片播放，不读写来源时间或导出时长。
 export class FramePlayback {
   constructor(count, fps, now, startIndex=0) {

@@ -116,3 +116,29 @@ test('统一裁剪与尺寸、最终播放、PNG/ZIP真实下载、框选/保留
   await expect(page.locator('#download,#edit-export,#matting-export')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('13帧循环复用像素缓存，改文件名/动作帧率不重复生成预览',async({page})=>{
+  const errors=[];page.on('pageerror',reason=>errors.push(reason.message));
+  await page.goto('/');await page.locator('#file').setInputFiles(path.resolve('output/fixtures/自制 动作测试.mp4'));
+  await expect(page.locator('#status')).toHaveText('已导入');await page.locator('#end').fill('1.083333');
+  await page.locator('#extract').click();await expect(page.locator('#result-meta')).toContainText('13 帧');
+  await page.locator('#organize').click();await page.locator('#tab-matting').click();await page.locator('#matting-start').click();
+  await expect(page.locator('#matting-meta')).toContainText('13 帧已抠');await page.locator('#tab-export').click();
+  await page.locator('#export-size').selectOption('64');
+  await expect.poll(()=>page.locator('#export-canvas').evaluate(canvas=>canvas.width)).toBe(64);
+  let requests=0;page.on('request',request=>{if(request.url().endsWith('/api/export/preview'))requests++;});
+  await page.evaluate(()=>{
+    window.exportChanges=0;
+    const position=document.getElementById('export-position');let previous=position.textContent;
+    window.exportObserver=new MutationObserver(()=>{const current=position.textContent;if(current!==previous){window.exportChanges++;previous=current;}});
+    window.exportObserver.observe(position,{childList:true});
+  });
+  await page.locator('#export-fps').fill('30');await page.locator('#export-fps').blur();await page.locator('#export-play').click();
+  await expect.poll(()=>page.evaluate(()=>window.exportChanges)).toBeGreaterThan(45);
+  await page.locator('#export-play').click();
+  expect(requests).toBeLessThanOrEqual(13);
+  const warmed=requests;await page.locator('#export-name').fill('缓存验证');await page.locator('#export-name').blur();
+  await page.locator('#export-fps').fill('12');await page.locator('#export-fps').blur();
+  await page.locator('#export-next').click();
+  expect(requests).toBe(warmed);expect(errors).toEqual([]);
+});

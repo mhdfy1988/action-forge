@@ -1,9 +1,11 @@
 import {setControl} from './icons-ui.js';
 import {FramePlayback} from './core.js';
+import {exportSettings,exportGeometry,previewKey} from './export-core.js';
+import {PreviewCache} from './preview-cache.js';
 const $=id=>document.getElementById(id);
 export function createExport(api,{source,onControls,name=()=>'',onExported=()=>{}}){
   let input=null,analysis=null,sourceKey='',index=0,busy=false,boxMode=false,rawImage=null,clock=null,raf=0,version=0,wanted=null,loading=false;
-  const cache=new Map();
+  const cache=new PreviewCache();
   let pending=Promise.resolve(),settling=false,sheetView=false;
   const canvas=$('export-canvas'),ctx=canvas.getContext('2d');
   let viewMode='fit';
@@ -24,26 +26,14 @@ export function createExport(api,{source,onControls,name=()=>'',onExported=()=>{
   function crop(){return $('export-crop-enabled').checked?['x','y','cw','ch'].map(id=>Number($(`export-${id}`).value)):[0,0,analysis.canvas.width,analysis.canvas.height];}
   function settings(){
     if(!input||!analysis)throw new Error('请先完成当前序列抠图');
-    const c=crop(),ratio={original:1,half:.5,quarter:.25,eighth:.125}[$('export-size').value];
-    const width=ratio?Math.max(1,Math.round(c[2]*ratio)):Number($('export-width').value),height=ratio?Math.max(1,Math.round(c[3]*ratio)):Number($('export-height').value);
-    if(!c.every(Number.isInteger)||c[0]<0||c[1]<0||c[2]<1||c[3]<1||c[0]+c[2]>analysis.canvas.width||c[1]+c[3]>analysis.canvas.height)throw new Error('裁剪范围必须在原画布内');
-    if(![width,height].every(v=>Number.isInteger(v)&&v>0&&v<=8192)||width*height>16_000_000)throw new Error('请设置有效尺寸（最多1600万像素）');
-    const format=$('export-format').value,columns=Number($('export-columns').value);
-    if(!Number.isInteger(columns)||columns<1||columns>600)throw new Error('列数须为1–600');
-    const cols=Math.min(columns,input.frameIds.length),rows=Math.ceil(input.frameIds.length/cols);
-    if(format==='sheet'&&(Math.max(width*cols,height*rows)>8192||width*height*cols*rows>16_000_000))throw new Error('图集太大，请降低尺寸或调整列数');
-    if(width*height*input.frameIds.length*4>2*1024**3)throw new Error('序列超过2GiB预算，请降低尺寸');
-    const name=$('export-name').value.trim();if(!name||/[\\/:*?"<>|\x00-\x1f]/.test(name))throw new Error('请使用有效文件名，不含路径或特殊字符');
-    const fps=Number($('export-fps').value);if(!Number.isInteger(fps)||fps<1||fps>60)throw new Error('动作帧率须为1–60帧/秒');
-    return {...input,crop:c,width,height,fps,upscale:$('export-upscale').checked,filter:$('export-filter').value,format,columns,name};
+    return exportSettings(input,analysis,{crop:crop(),size:$('export-size').value,width:Number($('export-width').value),height:Number($('export-height').value),fps:Number($('export-fps').value),columns:Number($('export-columns').value),format:$('export-format').value,name:$('export-name').value,filter:$('export-filter').value,upscale:$('export-upscale').checked});
   }
   function controls(){
     let valid=!!analysis;
     try{
-      const s=settings(),count=input.frameIds.length,cols=Math.min(count,s.columns),rows=Math.ceil(count/cols);
+      const s=settings(),count=input.frameIds.length,{cols,rows,scale}=exportGeometry(s,count);
       $('export-summary').textContent=`${count} 帧 · 单帧 ${s.width} × ${s.height}${s.format==='sheet'?` · 图集 ${cols} × ${rows} · ${s.width*cols} × ${s.height*rows}`:''}`;
       const b=analysis.bounds,c=s.crop;
-      const scale=Math.min(s.width/c[2],s.height/c[3],s.upscale?Infinity:1);
       $('export-geometry').textContent=`画布 ${s.width} × ${s.height} · 缩放 ${Math.round(scale*1000)/10}%`;
       $('export-crop-warning').textContent=b&&(c[0]>b[0]||c[1]>b[1]||c[0]+c[2]<b[2]||c[1]+c[3]<b[3])?'裁剪框可能截断部分主体':'';
     }catch(reason){valid=false;$('export-summary').textContent=reason.message;}
@@ -87,7 +77,7 @@ export function createExport(api,{source,onControls,name=()=>'',onExported=()=>{
           if(!response.ok){const problem=await response.json();throw new Error(problem.detail||'预览失败');}
           image=await imageFrom(await response.blob());
           if(request.version!==version)continue;
-          cache.set(request.key,image);while(cache.size>8||[...cache.values()].reduce((sum,item)=>sum+item.width*item.height*4,0)>128*1024**2){if(cache.size===1)break;cache.delete(cache.keys().next().value);}
+          cache.set(request.key,image);
         }
         if(request.version===version&&request.index===index){if(request.raw)rawImage=image;draw(image);error('');}
       }catch(reason){if(request.version===version){stop();error(reason.message);canvas.hidden=true;$('export-empty').hidden=false;$('export-empty').textContent='预览失败，请检查设置';}}
@@ -95,9 +85,9 @@ export function createExport(api,{source,onControls,name=()=>'',onExported=()=>{
     loading=false;settling=false;controls();
   }
   function render(){
-    try{const s=settings();wanted={settings:s,index,key:`${boxMode?'raw':JSON.stringify(s)}:${sheetView?'sheet':index}`,raw:boxMode,sheet:sheetView,version};if(!loading)pending=drain();}catch(reason){stop();error(reason.message);controls();}
+    try{const s=settings();wanted={settings:s,index,key:previewKey(s,sheetView?0:index,boxMode?'raw':sheetView?'sheet':'frame'),raw:boxMode,sheet:sheetView,version};if(!loading)pending=drain();}catch(reason){stop();error(reason.message);controls();}
   }
-  function changed(){stop();if($('export-format').value!=='sheet')sheetView=false;clearCache();error('');controls();render();}
+  function changed(){stop();if($('export-format').value!=='sheet')sheetView=false;version++;wanted=null;error('');controls();render();}
   function defaults(){
     viewMode='fit';
     $('export-crop-enabled').checked=false;$('export-size').value='original';$('export-padding').value=8;$('export-upscale').checked=false;

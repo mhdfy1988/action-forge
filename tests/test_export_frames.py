@@ -1,25 +1,13 @@
 import io
 import json
 import zipfile
-import hashlib
-import pytest
 from PIL import Image
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.export_frames import ExportSettings, transform
-from app.domain import DomainError
 from test_organizer import ready
 from test_batch_matting import settled
-
-
-class Shapes:
-    def __enter__(self):return self
-    def __exit__(self,*args):pass
-    def stop(self):pass
-    def cutout(self, source, target, batch):
-        im=Image.new('RGBA',(320,180));n=int(target.stem.split('_')[-1]);
-        im.paste((220,40,60,128),(10+n*3,20,30+n*3,50));im.putpixel((5,10),(20,80,40,1));im.save(target)
-        return 'test-shapes'
+from synthetic_matting import Shapes
 
 
 def test_export_crop_preview_zip_sheet_repair_and_source_immutable(fixtures,tmp_path):

@@ -19,9 +19,10 @@ from PIL import Image
 from .domain import DomainError
 from .media import directory_bytes
 from .organizer import edited_manifest
+from model_config import resolve_model_runtime
 
-MATTING_ROOT = Path(os.environ.get('FRAMES_MATTING_ROOT', Path(__file__).resolve().parents[2] / 'game-art-matting')).resolve()
-MODEL_PYTHON = Path(os.environ.get('FRAMES_MODEL_PYTHON', MATTING_ROOT / '.venv' / 'Scripts' / 'python.exe')).resolve()
+_model_runtime = resolve_model_runtime()
+MATTING_ROOT, MODEL_PYTHON = _model_runtime.root, _model_runtime.python
 MAX_BATCH_SECONDS = 45 * 60
 PROCESSING_POLICY = "model-local-despill-v1"
 

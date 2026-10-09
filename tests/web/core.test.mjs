@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {expectedCount,formatTime,frameAt,FramePlayback} from '../../web/core.js';
+import {expectedCount,formatTime,FramePlayback} from '../../web/core.js';
 test('预计帧数与半开区间',()=>{assert.equal(expectedCount(2,4,12),24);assert.equal(expectedCount(.1,.4,10),3);assert.equal(expectedCount(1,0,12),0);assert.equal(expectedCount(0,1,12.1),0);});
-test('格式与播放边界',()=>{assert.equal(formatTime(61.125),'01:01.125');assert.equal(frameAt({frames:[{durationMs:83.3},{durationMs:83.3}]},83.3),1);});
+test('视频时间显示格式',()=>{assert.equal(formatTime(61.125),'01:01.125');});
 test('独立播放帧率：均匀图片间隔、结束与非零起点',()=>{
   for(const fps of [1,6,12,24,60]){
     const clock=new FramePlayback(12,fps,100);

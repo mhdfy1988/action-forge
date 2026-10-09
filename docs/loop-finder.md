@@ -46,4 +46,4 @@
 - 先收真实跑步/待机素材试用反馈，记录误选半周期、漏检、接缝突变及耗时，不用私人素材反复调阈值后再称独立测试。
 - 后续仅在证据需要时，对少量候选加入更高分辨率/光流验证；重复/跳变检测、自动混帧/补帧、M3/M4均不在本轮范围。
 
-验证记录统一放[整理验收](organizer-acceptance.md)，源码/成熟技术入口见[证据索引](source-evidence.md)。
+历史验证记录见[整理验收](history/organizer-acceptance.md)，早期技术入口见[证据索引](history/source-evidence.md)；当前入口与状态以根README及恢复索引为准。

@@ -65,7 +65,6 @@ def test_real_api_zip_and_range(fixtures,tmp_path):
 
 def test_cancel_and_repeat_conflict(fixtures,tmp_path,monkeypatch):
     import app.service as service
-    from app.media import Cancelled
     def slow_decode(path,video,indices,destination,cancel,timeout,monitor,limits):
         for _ in range(200):
             monitor();time.sleep(.01)

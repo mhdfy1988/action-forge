@@ -1,6 +1,6 @@
 # 源码与依赖证据
 
-> 历史设计/验收记录，保留原日期与证据；其中旧界面、旧策略、端口进程与待开发描述不代表当前状态。当前能力以 [README](../README.md)、[项目计划](project-plan.md) 和 [导出设计](export-design.md) 为准，禁止照历史步骤覆盖用户当前环境。
+> 历史设计/验收记录，保留原日期与证据；其中旧界面、旧策略、端口进程与待开发描述不代表当前状态。当前能力以 [README](../../README.md)、[项目计划](../project-plan.md) 和 [导出设计](../export-design.md) 为准，禁止照历史步骤覆盖用户当前环境。
 
 ## B0批量抠图与人工精修复用核对（2026-10-07）
 
@@ -25,7 +25,7 @@
 - U12桌面工作台：web/app.js的setStage/updateNavigation负责唯一活动步骤和顶部导出位置；organizer-ui.js通过onActivate/onControls与pause/working/jobId/name适配，FrameEditor/FramePlayback/服务端v2/v3协议均复用，不复制编辑或抽帧逻辑。一个main内的两个tabpanel仅切内容，固定网格几何，保持DOM和编辑资源；普通viewer改内嵌，只有loop-dialog保留模态。tests/browser/workspace.spec.js覆盖真实几何/状态/锁定，双ZIP重读验证来源不变。
 - [W3C步骤Tab规范](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)：tablist/tab/tabpanel及aria-selected/controls/labelledby关联，竖向上下键/横向左右键；异步交接采用手动激活，方向键只移焦点、Enter/Space切换。原生按钮/SVG/CSS足够，无路由框架或新依赖；整理快捷键明确排除侧栏焦点，不能把Delete导航操作误作删帧。
 
-- 循环检测试验版：已有FrameEditor.revision/order/commit、FramePlayback.position、同源PNG/缩略图接口可直接适配；算法`web/loop-core.js`、隔离线程`loop-worker.js`、弹窗`loop-ui.js`。输出是原帧ID区间，不生成/混合图片，不改v3导出。流程和阈值限制见[循环方案](loop-finder.md)。
+- 循环检测试验版：已有FrameEditor.revision/order/commit、FramePlayback.position、同源PNG/缩略图接口可直接适配；算法`web/loop-core.js`、隔离线程`loop-worker.js`、弹窗`loop-ui.js`。输出是原帧ID区间，不生成/混合图片，不改v3导出。流程和阈值限制见[循环方案](../loop-finder.md)。
 - [Video Textures原论文介绍](https://www.microsoft.com/en-us/research/publication/video-textures/)：支持“分析视频结构以找可重复衔接关系”的研究方向，不证明本项目当前启发式的效果，也不声称复制其完整合成算法。连续邻域、绿幕权重、版本门禁为本项目方案。
 - [MDN OffscreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas)：支持在工作线程运行画布操作，采用浏览器现有图像解码/Canvas能力，不为轻量试验安装NumPy/OpenCV；[Worker.terminate](https://developer.mozilla.org/en-US/docs/Web/API/Worker/terminate)用于关闭/超时立即结束线程；[showModal](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/showModal)隔离主页面交互，但document快捷键仍须显式检查弹窗状态。
 - [OpenCV光流官方说明](https://docs.opencv.org/4.13.0/d4/dee/tutorial_optical_flow.html)：运动场可以作后续候选方向验证，但依赖亮度/局部运动假设。当前未安装或接入，不把颜色变化向量比较称为光流。

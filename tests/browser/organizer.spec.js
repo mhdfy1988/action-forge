@@ -348,7 +348,7 @@ test('交接等待中禁重复交接与重新抽帧',async({page})=>{
   await expect(page.locator('#organizer-workspace')).toBeVisible();
 });
 
-test('步骤栏往返保留编辑与会话，顶部导出，移除返回与结束入口',async({page})=>{
+test('步骤栏往返保留编辑与会话，统一导出锁定，移除返回与结束入口',async({page})=>{
   const errors=[],prompts=[],deleted=[];page.on('pageerror',reason=>errors.push(reason.message));
   page.on('dialog',dialog=>{prompts.push(dialog.message());dialog.dismiss();});
   page.on('request',request=>{if(request.method()==='DELETE' && /\/api\/edit-sessions\//.test(request.url()))deleted.push(request.url());});

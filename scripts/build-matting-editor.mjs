@@ -1,10 +1,9 @@
 import {createRequire} from 'node:module';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,basename} from 'node:path';
-import {pathToFileURL} from 'node:url';
 
 const project=resolve(import.meta.dirname,'..');
-const source=resolve(project,'../game-art-matting');
+const source=resolve(process.env.FRAMES_MATTING_ROOT||resolve(project,'../game-art-matting'));
 const target=resolve(project,'web/matting');
 const require=createRequire(resolve(source,'package.json'));
 const {build}=require('esbuild');

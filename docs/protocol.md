@@ -2,6 +2,8 @@
 
 本页描述M1原始抽帧结果，M2不会改写它。整理输出使用独立[v3协议](organizer-protocol.md)，不能把删除/排序后的序列冒称仍是原抽帧区间。
 
+v2/v3下载是显式兼容/原字节测试接口；用户页面不提供旧导出入口。当前PNG资产包输出见[导出协议](export-design.md)，其动作播放时长与源时间分开。
+
 PNG序列ZIP只含`frame-sequence.json`与`frames/frame_000001.png`等；缩略图不导出，路径不得包含本机绝对路径。
 
 - `formatVersion: 2`；`id/name/loop/canvas`为序列身份、显示名、播放设置与标准化尺寸。

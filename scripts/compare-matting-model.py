@@ -16,7 +16,9 @@ parser.add_argument('output',type=Path)
 parser.add_argument('--model',choices=('toonout','hr'),required=True)
 args=parser.parse_args()
 torch.set_num_threads(4)
-sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'game-art-matting'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from model_config import resolve_model_runtime
+sys.path.insert(0,str(resolve_model_runtime().root))
 import app.engine as module
 from app.refinement import refine
 

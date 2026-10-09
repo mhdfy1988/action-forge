@@ -1,25 +1,40 @@
-# 统一画面与导出第一版
+# 当前导出协议与实现
 
-## 2026-10-09 导出改版（当前口径）
+## 输入与边界
 
-- 格式、尺寸、动作与文件为常用设置；裁剪坐标/边距/框选和缩放算法/允许放大收进高级设置。尺寸增加100%/50%/25%/12.5%，按当前统一裁剪框计算宽高，四舍五入且至少1px；固定尺寸仍等比适配和透明填充，不逐帧紧裁。实际画布与有效缩放比例同时显示，显示适配仍不放大。
-- 输出统一为ZIP：序列frames/*.png＋frame-sequence.json（formatVersion=6）；图集sheet.png＋sheet.json（formatVersion=1、kind=fixed-grid）。图集描述包含尺寸、格子、行列、顺序、每帧矩形及原来源记录；最后空格透明，不旋转、不逐帧居中。JSON为项目中立描述，尚未宣称某游戏引擎能直接导入。
-- 动作帧率为明确的输出设置（整数1–60，默认12），同时驱动此处预览，并写入playback；frameDuration=1/fps、duration=count/fps，以分子分母记录。原frame内来源时间不改写，不把源时间当最终动作播放时间；其他工作区预览速度仍仅预览。非法值恢复上次有效值，重置恢复12。
-- 整张图集预览通过view=sheet调用与下载共用compose_sheet和transform；图集查看禁用逐帧/播放，切回动作恢复原帧位。预览未叠装饰网格，避免把辅助线混进像素证据。单图预算及最新请求失效/串行收尾沿用，迟到响应不覆盖新设置。
-- analyze返回exportVersion=6；新前端发现旧服务明确要求重启，不静默回旧PNG路径。本轮主8897未重启，旧用户页面未刷新；磁盘实现/隔离验收不等于主入口已安装。
+导出工作区只接当前全部有序且已抠好的帧，不取勾选播放集合。batchId、frameIds、revisions固定来源快照；重复/缺失/修订变化显式拒绝，不静默导出旧结果。
 
-### 参考源码证据
+## 画面处理
 
-对照Sprite Video Lab提交01603e87f95039e2bf8760bbaec576c05776548b：app/app.js的exportSelectedFormat/exportMagicFrames将播放间隔送到输出，server.py的export_job/save_sprite_sheet分别写序列/图集JSON。借鉴“格式对应描述、比例输出”的交互，不复制它的自身Alpha遮罩paste；本项目无mask复制保留精确RGBA。仓库：https://github.com/sparklecatta-lang/sprite-video-lab/tree/01603e87f95039e2bf8760bbaec576c05776548b 。未安装或执行参考项目，不承诺其模型效果。下文v5/单PNG为历史第一版，不再是当前输出协议。
+整组非零Alpha范围并集含软边，统一裁剪框。原尺寸及100%/50%/25%/12.5%按统一框计算，取整且至少1px；固定尺寸或自定义画布保持比例、透明居中填充，默认不放大。不逐帧紧裁，不逐帧移回脚底。裁剪可能截主体时提示，不修改源或精修PNG。
 
-预览清晰度修订：默认“适配”只缩小不放大，倍率不超过100%；“100%”按输出PNG实际像素显示，大图只在预览区滚动。显示倍率与允许放大/输出宽高是两套参数，查看切换不请求重算、不改变PNG像素；低清输出不会用高清源替代。64×64仍只有64×64细节，不能靠放大查看恢复。原实现width/height:100%造成第二次放大，已移除，框选仍按实际canvas显示矩形映射源像素。
+Pillow裁剪/缩放与无mask复制保持RGBA，不能以自身Alpha遮罩重复相乘。预览与下载共用app/export_frames.py的transform，整张图集共用compose_sheet；预览没有烘焙辅助网格。适配只缩小，100%按实际图片像素，可在预览区滚动；不拿高清源冒充低清导出。
 
-最新入口修订：只保留侧栏导出工作区，移除抽帧/整理/抠图的重复下载控件和前端事件。后端旧原字节导出接口保留契约兼容，不是用户入口或失败回退。统一导出成功标记当前整理结果已导出，失败不修改该状态。
+## 参数与显示
 
-用户2026-10-07确认：独立侧栏“导出”，左侧最终播放、右侧设置，输出PNG序列ZIP或等尺寸网格PNG。仅接当前全部有序且已抠帧，不使用勾选集合，无多动作/时间轴/引擎专属描述。
+web/export-core.js负责纯值尺寸/验证、几何、像素缓存键；web/export-ui.js负责DOM、网络、播放、版本与收尾。改文件名、动作fps或文件格式不改变单帧像素；图集列数只影响整图缓存键。
 
-流程：当前批次与修订快照 → 整组Alpha非零范围并集 → 统一裁剪框 → 等比例适配目标画布/透明填充 → 同核心预览与下载。边距按源像素，裁剪可自动/框选/坐标输入，原尺寸即当前裁剪框尺寸。默认不放大，支持显式放大；平滑/像素两种缩放。手动截断主体提示不阻止。源及精修PNG不改写，参数重置/切工具不会触发模型。
+web/preview-cache.js为真正最近使用淘汰，最多64帧且RGBA总量128MiB。超预算单帧可显示但不缓存；内存更新增量计数，不每次遍历计算。源修订/画面参数改变用不同键；迟到响应按版本失效。测试覆盖13帧循环超过45次换帧、预览请求不超过13次，元数据改动不重复生成；大图仍可能受128MiB预算淘汰，不能承诺任何序列全驻内存。
 
-图集按行优先、指定列数、末行补透明格，不逐帧紧裁或旋转；单图最多8192边/1600万像素，输出序列总RGBA2GiB，任务120秒，预览单帧最多1600万像素、8帧LRU。PNG序列包含明确的新输出清单，不冒充原v4；原来源/帧身份仍可追溯。校验后返回下载，忙锁/ManagedDownload复用，失败清理临时目录不改变源。修订不一致明确失败，返回精修后重新计算。
+普通换帧加载不是全局独占任务，disabled一次计算最终值，变化才写。导出停止播放、丢弃队列并等待在途预览释放后端忙锁；切页先失效并收尾，再开放新工作区。analyze.exportVersion=6，旧服务明确要求重启，不回旧裸PNG。
 
-通用能力复用Pillow裁剪、RGBA缩放及PNG编码、标准zipfile、Pydantic校验、既有安全缓存和下载收尾；无新运行依赖。参考官方Image API：https://pillow.readthedocs.io/en/stable/reference/Image.html ，Alpha getbbox保留非零软边；平滑resize使用Pillow RGBA预乘链路，源码证据：https://pillow.readthedocs.io/en/stable/_modules/PIL/Image.html 。不承诺超大图集硬件兼容，阈值是本工具资源上限。
+## 输出
+
+两种格式均为ZIP：
+
+- 序列：frames/frame_000001.png等＋frame-sequence.json；formatVersion=6、kind=uniform-frame-export，包含画布、变换、playback与帧身份/来源。
+- 图集：sheet.png＋sheet.json；formatVersion=1、kind=fixed-grid，包含画布/格子/行列、playback及每帧index/rect/source。按行优先、不旋转，末格透明。
+
+动作fps明确设置为整数1–60，默认12；用于此工作区预览与输出。playback.frameDuration为1/fps、duration为count/fps，按numerator/denominator有理数记录。源帧原时长只作来源记录，不作为最终动作时长；其他工作区预览速度仍仅预览。
+
+此JSON为项目中立协议，不宣称引擎原生导入。旧v2/v3原字节输出仅保留显式兼容/契约测试；用户侧只有统一导出入口。
+
+## 预算与校验
+
+单图最多8192边/1600万像素、序列RGBA估算2GiB；图集同样受单图限制，任务120秒。复用缓存/下载生命周期，ZIP和PNG校验后返回；失败清临时目录，不改源。下载触发不等于文件已保存到用户指定目录。
+
+## 证据与历史
+
+- [Pillow Image API](https://pillow.readthedocs.io/en/stable/reference/Image.html)及[官方源码](https://pillow.readthedocs.io/en/stable/_modules/PIL/Image.html)：RGBA resize采用预乘处理；本项目无mask复制避免Alpha重复相乘。
+- [Sprite Video Lab提交01603e8](https://github.com/sparklecatta-lang/sprite-video-lab/tree/01603e87f95039e2bf8760bbaec576c05776548b)：app/app.js导出请求携带播放间隔；server.py的export_job/save_sprite_sheet输出描述。只借鉴交互/描述，不照搬自身Alpha遮罩拼接；未安装或执行参考项目。
+- [早期导出设计与变更记录](history/export-design-before-cleanup.md)只作为历史，不再混在当前操作说明中。

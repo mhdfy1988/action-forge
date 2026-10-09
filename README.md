@@ -31,7 +31,7 @@ npm.cmd ci
 
 用 Chrome 打开 http://127.0.0.1:8897/ 。不监听公网，不占用独立抠图入口 8896。
 
-环境变量：`FRAMES_CACHE` 指定本工具专用缓存；`FRAMES_FFMPEG` / `FRAMES_FFPROBE` 指定程序路径。未知非空目录不会被接管。当前开发磁盘目录仍为 `game-video-to-frames`，不需要改名才能运行。
+环境变量：`FRAMES_CACHE` 指定本工具专用缓存；`FRAMES_FFMPEG` / `FRAMES_FFPROBE` 指定程序路径。未知非空目录不会被接管。本地标准目录为 `action-forge`，代码按自身位置解析，不依赖目录名字。
 
 ### 批量模型的可选依赖
 
@@ -44,7 +44,7 @@ npm.cmd ci
 ## 开发验证
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
 npm.cmd test
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe scripts/make-demo.py
@@ -68,7 +68,7 @@ npm.cmd run test:e2e
 
 此服务仅使用自制形状验证处理协议，不代表真实模型质量。完整套件和定向测试不要同时共享同一个服务。每次完整验收使用新的专用缓存目录；测试后只停止自己创建的实例。
 
-2026-10-09 导出改版验收：37 项 Chrome 通过，1 项真实模型用例跳过；22 项领域与2项导出像素测试通过，实际下载包重读通过。本机用户已授权启动新版8897；这不等于已发布桌面客户端。
+2026-10-09 导出改版基线验收：37 项 Chrome 通过，1 项真实模型用例跳过；22 项领域与2项导出像素测试通过，实际下载包重读通过。本轮整理新增参数/配置/缓存及13帧循环测试，最新验证记录见[恢复入口](docs/recovery-index.md)。本机启动不等于已发布桌面客户端。
 
 ## 边界与文档
 
@@ -79,6 +79,7 @@ npm.cmd run test:e2e
 - [批量抠图与精修](docs/batch-matting-design.md)
 - [时间与来源协议](docs/protocol.md)
 - [图标与许可](docs/icon-system.md)
+- [测试职责与整理](docs/test-strategy.md) · [历史证据](docs/history/)
 - [当前任务](docs/stages/current-todo.md) · [恢复入口](docs/recovery-index.md)
 - [更新日志](CHANGELOG.md)
 
