@@ -1,17 +1,21 @@
 """仅本机HTTP入口：限制上传、隔离路径、禁止跨站调用。"""
 import hashlib
 from contextlib import asynccontextmanager
+from pathlib import Path
 from urllib.parse import unquote
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
-from .config import CACHE, LIMITS, ROOT, Limits
+from .config import CACHE, LIMITS, PROJECTS, ROOT, Limits
 from .domain import DomainError, ExtractionRequest
+from .character_project_schema import CharacterProject, Character
+from .project_repository import ProjectRepository
+from .legacy_migration import MigrationSpec, migrate_batch, migrate_sequence
 from .media import binary, directory_bytes
 from .service import Store
 from . import export_frames
-from .organizer import HandoffRequest, EditExportRequest
+from .organizer import HandoffRequest, EditExportRequest, edited_manifest
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -32,6 +36,43 @@ class WorkspaceReset(BaseModel):
     sessionId: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
 
 
+class ProjectCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+    name: str = Field(min_length=1, max_length=80)
+    characterId: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+    characterName: str = Field(min_length=1, max_length=80)
+
+
+class ProjectSave(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    expectedRevision: int = Field(ge=0, strict=True)
+    project: CharacterProject
+
+
+class BatchMigration(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    projectId: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+    projectName: str = Field(min_length=1, max_length=80)
+    characterId: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+    characterName: str = Field(min_length=1, max_length=80)
+    actionId: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{0,63}$")
+    actionName: str = Field(min_length=1, max_length=80)
+    fps: int = Field(ge=1, le=60, strict=True)
+
+
+class OrganizedMigration(BatchMigration):
+    frameIds: list[str] = Field(min_length=1, max_length=600)
+
+
+def migration_spec(request: BatchMigration) -> MigrationSpec:
+    return MigrationSpec(
+        project_id=request.projectId, project_name=request.projectName,
+        character_id=request.characterId, character_name=request.characterName,
+        action_id=request.actionId, action_name=request.actionName, fps=request.fps,
+    )
+
+
 class ManagedDownload(FileResponse):
     """复用文件响应；传输成功、异常或断开均释放临时文件及占用。"""
     def __init__(self, path, cleanup, filename="organized-frames.zip", media_type="application/zip"):
@@ -45,10 +86,14 @@ class ManagedDownload(FileResponse):
             await run_in_threadpool(self.cleanup)
 
 
-def create_app(cache=CACHE, limits: Limits = LIMITS):
+def create_app(cache=CACHE, limits: Limits = LIMITS, projects=None):
     @asynccontextmanager
     async def lifespan(app):
         app.state.store = Store(cache, limits)
+        project_root = Path(projects).resolve() if projects is not None else (
+            PROJECTS if Path(cache).resolve() == CACHE else Path(cache).resolve().parent / "projects"
+        )
+        app.state.projects = ProjectRepository(project_root)
         yield
         await run_in_threadpool(app.state.store.close)
 
@@ -220,6 +265,83 @@ def create_app(cache=CACHE, limits: Limits = LIMITS):
     @app.get("/")
     def index():
         return FileResponse(ROOT / "web" / "index.html")
+
+    @app.get("/projects")
+    def projects_page():
+        return FileResponse(ROOT / "web" / "projects.html")
+
+    @app.get("/api/character-projects")
+    def list_projects():
+        return {"projects": app.state.projects.list()}
+
+    @app.post("/api/character-projects")
+    def create_project(request: ProjectCreate):
+        project = CharacterProject(
+            formatVersion=1, kind="action-forge-project", id=request.id,
+            name=request.name, revision=0,
+            characters=[Character(
+                id=request.characterId, name=request.characterName, revision=0,
+                referenceImage=None, canvas=None, origin=None,
+                scale={"x": 1, "y": 1}, actions=[],
+            )],
+        )
+        return app.state.projects.create(project)
+
+    @app.get("/api/character-projects/{project_id}")
+    def load_project(project_id: str):
+        return app.state.projects.load(project_id)
+
+    @app.put("/api/character-projects/{project_id}")
+    def save_project(project_id: str, request: ProjectSave):
+        return app.state.projects.save(project_id, request.expectedRevision, request.project)
+
+    @app.get("/api/character-projects/{project_id}/frames/{frame_id}")
+    def project_frame(project_id: str, frame_id: str):
+        project = app.state.projects.load(project_id)
+        for character in project.characters:
+            for action in character.actions:
+                for frame in action.frames:
+                    if frame.id == frame_id:
+                        relative = frame.assets.current or frame.assets.mattingBase or frame.assets.source
+                        return FileResponse(
+                            app.state.projects.root / project_id / relative,
+                            media_type="image/png",
+                        )
+        raise DomainError("项目帧不存在")
+
+    @app.post("/api/jobs/{token}/migrate")
+    def migrate_extracted_sequence(token: str, request: BatchMigration):
+        snapshot = app.state.store.snapshot(token)
+        if snapshot["status"] != "done" or "sequence" not in snapshot:
+            raise DomainError("只能迁移完整完成的抽帧结果")
+        frames = {frame["id"]: frame for frame in snapshot["sequence"]["frames"]}
+        return migrate_sequence(
+            app.state.projects, snapshot["sequence"], migration_spec(request),
+            lambda frame_id: app.state.store.result_file(token, frames[frame_id]["image"]),
+        )
+
+    @app.post("/api/edit-sessions/{token}/migrate")
+    def migrate_organized_sequence(token: str, request: OrganizedMigration):
+        job = app.state.store.editor_job(token)
+        identity = hashlib.sha256(
+            f"{job.id}:{','.join(request.frameIds)}".encode("utf-8")
+        ).hexdigest()[:32]
+        sequence = edited_manifest(job.result, request.frameIds, identity)
+        frames = {frame["id"]: frame for frame in job.result["frames"]}
+        return migrate_sequence(
+            app.state.projects, sequence, migration_spec(request),
+            lambda frame_id: app.state.store.result_file(job.id, frames[frame_id]["image"]),
+        )
+
+    @app.post("/api/matting-batches/{token}/migrate")
+    def migrate_matting_batch(token: str, request: BatchMigration):
+        batch = app.state.store.batches.get(token, done=True)
+        result = migrate_batch(
+            app.state.projects, batch,
+            migration_spec(request),
+            lambda frame_id, variant: app.state.store.batches.frame_file(token, frame_id, variant),
+        )
+        return result
 
     @app.post("/api/export/analyze")
     def export_analyze(request: export_frames.ExportSource):

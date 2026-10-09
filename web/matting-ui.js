@@ -20,6 +20,7 @@ export function createMatting(api,{snapshot,onControls=()=>{}}){
     $('matting-start').disabled=working||!!run||!input;
     $('matting-start').textContent=matches(input)?remaining.length?`补抠 ${remaining.length} 帧 →`:'重新抠图':'批量抠图 →';
     $('matting-cancel').hidden=!run;
+    $('matting-project').disabled=!input||!!remaining.length||working||!!run||!matches(input);
     for(const id of ['matting-play','matting-prev','matting-next'])$(id).disabled=!input||!!remaining.length||working||!!run||$('repair-dialog').open;
     onControls();
   }
@@ -142,6 +143,7 @@ export function createMatting(api,{snapshot,onControls=()=>{}}){
     }
   });
   $('matting-start').onclick=start;$('matting-cancel').onclick=cancel;
+  $('matting-project').onclick=()=>{const input=current();if(input&&matches(input)&&!missing(input).length)location.href=`/projects?batch=${encodeURIComponent(batch.id)}`;};
   $('matting-image').ondblclick=()=>{if(active)openRepair(active);};$('matting-image').title='双击精修';
   $('matting-prev').onclick=()=>step(-1);$('matting-next').onclick=()=>step(1);
   $('matting-play').onclick=()=>{

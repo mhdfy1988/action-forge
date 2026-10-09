@@ -1,0 +1,143 @@
+{
+  "formatVersion": 1,
+  "kind": "action-forge-project",
+  "id": "raccoon-project",
+  "name": "浣熊动作资产",
+  "revision": 3,
+  "characters": [
+    {
+      "id": "raccoon",
+      "name": "浣熊",
+      "revision": 2,
+      "referenceImage": "assets/characters/raccoon/reference/base.png",
+      "canvas": {"width": 847, "height": 714},
+      "origin": {"x": 423, "y": 650},
+      "scale": {"x": 1, "y": 1},
+      "actions": [
+        {
+          "id": "run",
+          "name": "跑步",
+          "revision": 1,
+          "loop": true,
+          "playback": {"mode": "constant-fps", "fps": 12},
+          "transform": {
+            "offset": {"x": 0, "y": 0},
+            "scale": {"x": 1, "y": 1},
+            "rotationDegrees": 0
+          },
+          "source": {
+            "kind": "video-extraction",
+            "video": "assets/characters/raccoon/actions/run/source/source.mp4",
+            "sequenceId": "11111111111111111111111111111111",
+            "extraction": {
+              "startSeconds": {"numerator": 0, "denominator": 1},
+              "endSeconds": {"numerator": 1, "denominator": 1},
+              "fps": 12
+            }
+          },
+          "frames": [
+            {
+              "id": "run-frame-000001",
+              "revision": 0,
+              "enabled": true,
+              "assets": {
+                "source": "assets/characters/raccoon/actions/run/source/frame_000001.png",
+                "mattingBase": "assets/characters/raccoon/actions/run/matting/frame_000001.png",
+                "current": "assets/characters/raccoon/actions/run/current/frame_000001.png"
+              },
+              "source": {
+                "sourceFrameId": "11111111111111111111111111111111-000001",
+                "sourceFrameIndex": 0,
+                "sourceTimeSeconds": {"numerator": 0, "denominator": 1},
+                "sourcePts": 0
+              }
+            },
+            {
+              "id": "run-frame-000002",
+              "revision": 1,
+              "enabled": true,
+              "assets": {
+                "source": "assets/characters/raccoon/actions/run/source/frame_000002.png",
+                "mattingBase": "assets/characters/raccoon/actions/run/matting/frame_000002.png",
+                "current": "assets/characters/raccoon/actions/run/current/frame_000002.png"
+              },
+              "source": {
+                "sourceFrameId": "11111111111111111111111111111111-000002",
+                "sourceFrameIndex": 1,
+                "sourceTimeSeconds": {"numerator": 1, "denominator": 12},
+                "sourcePts": 1000
+              }
+            }
+          ],
+          "events": [
+            {
+              "id": "run-footstep-left",
+              "frameId": "run-frame-000002",
+              "type": "footstep",
+              "parameters": {"foot": "left"}
+            }
+          ]
+        },
+        {
+          "id": "jump",
+          "name": "跳跃",
+          "revision": 1,
+          "loop": false,
+          "playback": {"mode": "constant-fps", "fps": 8},
+          "transform": {
+            "offset": {"x": 10, "y": -5},
+            "scale": {"x": 0.92, "y": 0.92},
+            "rotationDegrees": 0
+          },
+          "source": {
+            "kind": "image-sequence",
+            "sequenceId": "imported-jump",
+            "declaredFps": 8
+          },
+          "frames": [
+            {
+              "id": "jump-frame-000001",
+              "revision": 0,
+              "enabled": true,
+              "assets": {
+                "source": "assets/characters/raccoon/actions/jump/source/frame_000001.png",
+                "mattingBase": "assets/characters/raccoon/actions/jump/matting/frame_000001.png",
+                "current": "assets/characters/raccoon/actions/jump/current/frame_000001.png"
+              },
+              "source": {
+                "sourceFrameId": null,
+                "sourceFrameIndex": null,
+                "sourceTimeSeconds": null,
+                "sourcePts": null
+              }
+            },
+            {
+              "id": "jump-frame-000002",
+              "revision": 0,
+              "enabled": true,
+              "assets": {
+                "source": "assets/characters/raccoon/actions/jump/source/frame_000002.png",
+                "mattingBase": "assets/characters/raccoon/actions/jump/matting/frame_000002.png",
+                "current": "assets/characters/raccoon/actions/jump/current/frame_000002.png"
+              },
+              "source": {
+                "sourceFrameId": null,
+                "sourceFrameIndex": null,
+                "sourceTimeSeconds": null,
+                "sourcePts": null
+              }
+            }
+          ],
+          "events": [
+            {
+              "id": "jump-takeoff",
+              "frameId": "jump-frame-000001",
+              "type": "takeoff",
+              "parameters": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

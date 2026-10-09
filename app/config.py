@@ -26,3 +26,4 @@ class Limits:
 
 LIMITS = Limits()
 CACHE = Path(os.environ.get("FRAMES_CACHE", str(ROOT / ".cache"))).resolve()
+PROJECTS = Path(os.environ.get("ACTION_FORGE_PROJECTS", str(ROOT / "output" / "projects"))).resolve()

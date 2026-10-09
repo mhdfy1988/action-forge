@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>角色项目 · 动作工坊</title><link rel="stylesheet" href="/assets/style.css"><script type="module" src="/assets/project-workspace.js"></script></head>
+<body class="project-page">
+<header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 8 4-8 4-8-4 8-4Z"/><path d="m4 12 8 4 8-4M4 17l8 4 8-4"/></svg></span><span>动作工坊</span><span class="topbar-section">角色项目</span></div><div class="topbar-actions"><a class="topbar-link" href="/">单动作工具</a><span class="local"><i></i> 本机项目</span></div></header>
+<main class="project-shell">
+ <aside class="project-library">
+  <div class="project-library-head"><strong>项目</strong><button id="new-project" class="icon-button" title="新建角色项目" aria-label="新建角色项目">＋</button></div>
+  <div id="project-list" class="project-list" role="listbox" aria-label="角色项目"></div>
+ </aside>
+ <section id="project-empty" class="project-empty"><span class="project-empty-mark">◇</span><h1>选择一个角色项目</h1><p>每个项目保存一个角色及其全部动作。</p><button id="empty-create" class="button primary">新建项目</button></section>
+ <section id="project-editor" class="project-editor" hidden>
+  <div class="project-editor-head">
+   <div class="project-title-fields"><input id="project-name" maxlength="80" aria-label="项目名称"><span id="project-revision"></span></div>
+   <div class="project-save-state"><span id="project-state">已保存</span><button id="save-project" class="button primary" disabled>保存项目</button></div>
+  </div>
+  <div class="project-body">
+   <aside class="action-rail">
+    <div class="action-rail-head"><div><strong>动作</strong><span id="action-count"></span></div><button id="add-action" class="icon-button" aria-label="添加动作" title="添加动作">＋</button></div>
+    <div id="action-list" class="action-list"></div>
+   </aside>
+   <section id="action-empty" class="action-empty"><span>还没有动作</span><button id="empty-add-action" class="button secondary">添加第一个动作</button></section>
+   <section id="action-editor" class="action-editor" hidden>
+    <div class="action-settings">
+     <div class="action-heading"><div><span id="action-id"></span><input id="action-name" maxlength="80" aria-label="动作名称"></div><div class="action-order"><button id="action-up" class="icon-button" title="向上移动" aria-label="动作向上移动">↑</button><button id="action-down" class="icon-button" title="向下移动" aria-label="动作向下移动">↓</button><button id="delete-action" class="text-button danger">删除动作</button></div></div>
+     <div class="action-parameters"><label>播放速度 <input id="action-fps" type="number" min="1" max="60" step="1"><span>帧/秒</span></label><label class="switch-label"><input id="action-loop" type="checkbox">循环播放</label><span id="action-source"></span></div>
+    </div>
+    <div class="action-preview">
+     <div class="project-stage checker"><img id="project-frame" alt="动作帧预览" hidden><span id="project-frame-empty">当前动作还没有帧</span></div>
+     <div class="project-playback"><button id="project-prev" class="icon-button" aria-label="上一帧">←</button><button id="project-play" class="text-button">▷ 播放</button><button id="project-next" class="icon-button" aria-label="下一帧">→</button><span id="project-position">—</span></div>
+    </div>
+    <div id="project-frames" class="project-frames" aria-label="动作帧列表"></div>
+   </section>
+  </div>
+  <footer class="project-footer"><label>角色名称 <input id="character-name" maxlength="80"></label><span id="project-message" role="status"></span><span id="project-error" role="alert"></span></footer>
+ </section>
+</main>
+
+<dialog id="create-project-dialog" class="compact-dialog" aria-labelledby="create-project-title"><form method="dialog"><div class="dialog-head"><h2 id="create-project-title">新建角色项目</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><div class="dialog-fields"><label>项目 ID<input id="create-project-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}" placeholder="raccoon-actions"></label><label>项目名称<input id="create-project-name" required maxlength="80" placeholder="浣熊动作"></label><label>角色 ID<input id="create-character-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}" placeholder="raccoon"></label><label>角色名称<input id="create-character-name" required maxlength="80" placeholder="浣熊"></label></div><div class="dialog-actions"><button value="cancel" class="button secondary">取消</button><button id="confirm-create" value="default" class="button primary">创建</button></div></form></dialog>
+
+<dialog id="action-dialog" class="compact-dialog" aria-labelledby="action-dialog-title"><form method="dialog"><div class="dialog-head"><h2 id="action-dialog-title">添加动作</h2><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><div class="dialog-fields"><label>动作 ID<input id="new-action-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}" placeholder="run"></label><label>动作名称<input id="new-action-name" required maxlength="80" placeholder="跑步"></label><label>播放速度<input id="new-action-fps" type="number" required min="1" max="60" value="12"></label></div><div class="dialog-actions"><button value="cancel" class="button secondary">取消</button><button id="confirm-action" value="default" class="button primary">添加</button></div></form></dialog>
+
+<dialog id="migration-dialog" class="compact-dialog migration-dialog" aria-labelledby="migration-title"><form method="dialog"><div class="dialog-head"><div><h2 id="migration-title">加入当前透明动作</h2><span>批次只在本次服务运行期间有效</span></div><button value="cancel" class="icon-button" aria-label="关闭">×</button></div><div class="dialog-fields"><label>目标项目<select id="migration-project"><option value="">新建项目</option></select></label><label>项目 ID<input id="migration-project-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}"></label><label>项目名称<input id="migration-project-name" required maxlength="80"></label><label>角色 ID<input id="migration-character-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}" value="character-1"></label><label>角色名称<input id="migration-character-name" required maxlength="80" value="角色"></label><label>动作 ID<input id="migration-action-id" required pattern="[a-z0-9][a-z0-9._-]{0,63}" placeholder="run"></label><label>动作名称<input id="migration-action-name" required maxlength="80" placeholder="跑步"></label><label>播放速度<input id="migration-fps" type="number" required min="1" max="60" value="12"></label></div><div id="migration-error" role="alert"></div><div class="dialog-actions"><button value="cancel" class="button secondary">稍后处理</button><button id="confirm-migration" value="default" class="button primary">加入项目</button></div></form></dialog>
+</body>
+</html>

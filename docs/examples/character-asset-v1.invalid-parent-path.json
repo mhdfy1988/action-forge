@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "kind": "action-forge-project",
+  "id": "invalid-parent-path",
+  "name": "非法越界路径",
+  "revision": 0,
+  "characters": [
+    {
+      "id": "hero",
+      "name": "角色",
+      "revision": 0,
+      "referenceImage": "../outside.png",
+      "canvas": {"width": 256, "height": 256},
+      "origin": {"x": 128, "y": 240},
+      "scale": {"x": 1, "y": 1},
+      "actions": []
+    }
+  ]
+}
