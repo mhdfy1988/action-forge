@@ -20,7 +20,7 @@
 ## GitHub收口
 
 用户授权的公有库为 `mhdfy1988/action-forge`；私有 `game-art-matting` 是独立、可选的模型运行依赖，不整体公开。
-基线 `b7884f1` 已在 GitHub `main`。本轮目录迁移、配置统一、导出缓存重构、冗余代码清理和文档分层尚需完成最终提交推送核对；完成情况以[current-todo.md](stages/current-todo.md)为准。
+基线 `b7884f1` 已在 GitHub `main`；目录迁移、配置统一、导出缓存重构、冗余代码清理和文档分层的主体提交为 `8e3b055`，已推送并核对远端 SHA。最终状态以[current-todo.md](stages/current-todo.md)为准。
 公开提交不得包含 `output`、虚拟环境、模型权重、用户素材或本机日志；未创建 Release 或桌面安装包，也未修改、提交私有抠图仓库。
 旧本机会话资料位于忽略的 `output` 归档，仅用于本机恢复，不属于公开安装文档。
 
