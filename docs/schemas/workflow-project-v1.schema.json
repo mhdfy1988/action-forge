@@ -1,0 +1,355 @@
+{
+  "$defs": {
+    "AssetReference": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "revision"
+      ],
+      "title": "AssetReference",
+      "type": "object"
+    },
+    "AssetRevision": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "reference-image",
+            "action-video",
+            "frame-set/source",
+            "frame-set/transparent",
+            "action-clip",
+            "character-asset",
+            "engine-package"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "contentHash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Contenthash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "revision",
+        "path",
+        "contentHash"
+      ],
+      "title": "AssetRevision",
+      "type": "object"
+    },
+    "NodePosition": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "NodePosition",
+      "type": "object"
+    },
+    "NodeResult": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Nodeid",
+          "type": "string"
+        },
+        "definitionVersion": {
+          "minimum": 1,
+          "title": "Definitionversion",
+          "type": "integer"
+        },
+        "resultSignature": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Resultsignature",
+          "type": "string"
+        },
+        "confirmed": {
+          "title": "Confirmed",
+          "type": "boolean"
+        },
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/OutputBinding"
+          },
+          "title": "Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "nodeId",
+        "definitionVersion",
+        "resultSignature",
+        "confirmed",
+        "outputs"
+      ],
+      "title": "NodeResult",
+      "type": "object"
+    },
+    "OutputBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Port",
+          "type": "string"
+        },
+        "asset": {
+          "$ref": "#/$defs/AssetReference"
+        }
+      },
+      "required": [
+        "port",
+        "asset"
+      ],
+      "title": "OutputBinding",
+      "type": "object"
+    },
+    "Viewport": {
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "zoom": {
+          "maximum": 4.0,
+          "minimum": 0.1,
+          "title": "Zoom",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "zoom"
+      ],
+      "title": "Viewport",
+      "type": "object"
+    },
+    "WorkflowConnection": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "fromNode": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Fromnode",
+          "type": "string"
+        },
+        "fromPort": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Fromport",
+          "type": "string"
+        },
+        "toNode": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Tonode",
+          "type": "string"
+        },
+        "toPort": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Toport",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "fromNode",
+        "fromPort",
+        "toNode",
+        "toPort"
+      ],
+      "title": "WorkflowConnection",
+      "type": "object"
+    },
+    "WorkflowNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "reference-image",
+            "action-video",
+            "extract-frames",
+            "organize-frames",
+            "process-frames",
+            "remove-background",
+            "build-action-clip",
+            "assemble-character",
+            "game-preview",
+            "export-game-assets"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "definitionVersion": {
+          "minimum": 1,
+          "title": "Definitionversion",
+          "type": "integer"
+        },
+        "position": {
+          "$ref": "#/$defs/NodePosition"
+        },
+        "collapsed": {
+          "default": false,
+          "title": "Collapsed",
+          "type": "boolean"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "definitionVersion",
+        "position",
+        "parameters"
+      ],
+      "title": "WorkflowNode",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "formatVersion": {
+      "const": 1,
+      "title": "Formatversion",
+      "type": "integer"
+    },
+    "kind": {
+      "const": "action-forge-workflow",
+      "title": "Kind",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "viewport": {
+      "$ref": "#/$defs/Viewport"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/WorkflowNode"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "connections": {
+      "items": {
+        "$ref": "#/$defs/WorkflowConnection"
+      },
+      "title": "Connections",
+      "type": "array"
+    },
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/AssetRevision"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "results": {
+      "items": {
+        "$ref": "#/$defs/NodeResult"
+      },
+      "title": "Results",
+      "type": "array"
+    }
+  },
+  "required": [
+    "formatVersion",
+    "kind",
+    "id",
+    "name",
+    "revision",
+    "viewport",
+    "nodes",
+    "connections",
+    "assets",
+    "results"
+  ],
+  "title": "WorkflowProject",
+  "type": "object"
+}

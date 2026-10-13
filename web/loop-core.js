@@ -112,7 +112,17 @@ export function bindLoopCandidates(order,revision,candidates){
 }
 
 export function applyLoopCandidate(editor,candidate){
+  validateLoopCandidate(editor,candidate);
+  return editor.commit(candidate.frameIds);
+}
+
+function validateLoopCandidate(editor,candidate){
   if(editor.revision!==candidate.revision || editor.order.join('|')!==candidate.sequenceIds.join('|'))throw new Error('帧顺序已变化，请重新寻找循环');
   if(candidate.count!==candidate.frameIds.length || candidate.count<4 || candidate.frameIds.join('|')!==editor.order.slice(candidate.start,candidate.endExclusive).join('|'))throw new Error('循环候选无效');
-  return editor.commit(candidate.frameIds);
+}
+
+// 工作流只勾选候选，原编辑器的裁剪入口保留独立语义。
+export function selectLoopCandidate(editor,candidate){
+  validateLoopCandidate(editor,candidate);
+  editor.selected=new Set(candidate.frameIds);editor.active=candidate.frameIds[0];editor.anchor=candidate.frameIds[0];
 }

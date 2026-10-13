@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>JavaScript 运行预览 · 动作工坊</title>
+ <link rel="stylesheet" href="/javascript-runtime/demo.css">
+ <script type="module" src="/javascript-runtime/demo.js"></script>
+</head>
+<body>
+ <header class="runtime-bar">
+  <a class="runtime-brand" href="/projects" aria-label="返回动作工坊角色项目"><span class="brand-stack"><i></i><i></i><i></i></span><strong>动作工坊</strong><span>JavaScript 运行预览</span></a>
+  <div class="runtime-state"><i></i><span id="runtime-status">等待角色资产包</span></div>
+ </header>
+ <main class="runtime-shell">
+  <section class="stage-panel">
+   <header class="stage-heading"><div><span class="eyebrow">当前动作</span><h1 id="stage-title">尚未载入</h1></div><div class="stage-index"><strong id="frame-index">—</strong><span id="frame-id">—</span></div></header>
+   <div id="canvas-shell" class="canvas-shell">
+    <canvas id="stage-canvas" width="512" height="512" aria-label="角色动作运行预览"></canvas>
+    <div id="stage-empty" class="stage-empty"><span class="empty-mark">AF</span><strong>选择解压后的角色资产包</strong></div>
+    <div class="origin-cross" id="origin-cross" hidden></div>
+   </div>
+   <footer class="transport">
+    <button id="previous-frame" class="transport-icon" disabled aria-label="上一帧">←</button>
+    <button id="play-action" class="play-button" disabled><span>▶</span> 播放</button>
+    <button id="next-frame" class="transport-icon" disabled aria-label="下一帧">→</button>
+    <div class="transport-rule"></div>
+    <label>速度<select id="playback-speed" disabled><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+    <span id="playback-mode">—</span><span id="action-duration">—</span>
+   </footer>
+  </section>
+  <aside class="runtime-panel">
+   <section class="package-block">
+    <div class="block-title"><div><span class="eyebrow">角色资产包</span><h2 id="package-name">未选择</h2></div><label class="folder-button">打开文件夹<input id="package-input" type="file" webkitdirectory multiple></label></div>
+    <div id="package-meta" class="package-meta"><span>解压 R4 导出的 ZIP 后选择整个文件夹</span></div>
+    <p id="package-error" class="package-error" role="alert"></p>
+   </section>
+   <section class="character-block" hidden id="character-block">
+    <label class="character-select">角色<select id="character-select"></select></label>
+    <div class="runtime-metrics"><div><span>共享画布</span><strong id="canvas-size">—</strong></div><div><span>稳定原点</span><strong id="origin-value">—</strong></div><div><span>项目修订</span><strong id="project-revision">—</strong></div></div>
+   </section>
+   <section class="actions-block">
+    <div class="block-caption"><h2>动作</h2><span id="action-count">0 项</span></div>
+    <div id="action-list" class="action-list"><span class="panel-empty">载入资产后显示动作</span></div>
+   </section>
+   <section class="events-block">
+    <div class="block-caption"><h2>运行事件</h2><button id="clear-events" class="clear-button" disabled>清空</button></div>
+    <div id="event-log" class="event-log"><span class="panel-empty">播放到事件帧时会在这里记录</span></div>
+   </section>
+  </aside>
+ </main>
+</body>
+</html>

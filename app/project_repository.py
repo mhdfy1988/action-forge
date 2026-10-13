@@ -6,12 +6,15 @@ import os
 import hashlib
 import shutil
 import uuid
+import json
+import tempfile
+import zipfile
 from pathlib import Path
 
 from filelock import FileLock, Timeout
 from pydantic import ValidationError
 
-from .character_project_schema import CharacterProject, validate_project_assets
+from .character_project_schema import CharacterProject, upgrade_project, validate_project_assets
 from .domain import DomainError
 
 
@@ -100,7 +103,7 @@ class ProjectRepository:
             with self._lock(draft.id):
                 if directory.exists():
                     raise DomainError("项目ID已存在")
-                project = draft.model_copy(deep=True, update={"revision": 0})
+                project = upgrade_project(draft.model_copy(deep=True, update={"revision": 0}))
                 for character in project.characters:
                     character.revision = 0
                     for action in character.actions:
@@ -138,12 +141,28 @@ class ProjectRepository:
                     raise DomainError(
                         f"项目修订冲突：磁盘为{current.revision}，当前编辑基于{expected_revision}"
                     )
-                if (draft.migrations != current.migrations and not (
-                        allow_migration_append and
-                        draft.migrations[:len(current.migrations)] == current.migrations and
-                        len(draft.migrations) == len(current.migrations) + 1)):
+                old_action_ids = {action.id for character in current.characters
+                                  for action in character.actions}
+                new_action_ids = {action.id for character in draft.characters
+                                  for action in character.actions}
+                removed_action_ids = old_action_ids - new_action_ids
+                migrations_after_action_delete = [
+                    record for record in current.migrations
+                    if record.actionId not in removed_action_ids
+                ]
+                migration_append = (
+                    allow_migration_append and
+                    draft.migrations[:len(current.migrations)] == current.migrations and
+                    len(draft.migrations) == len(current.migrations) + 1
+                )
+                migration_action_delete = (
+                    bool(removed_action_ids) and
+                    draft.migrations == migrations_after_action_delete
+                )
+                if (draft.migrations != current.migrations and
+                        not migration_append and not migration_action_delete):
                     raise DomainError("迁移凭据不能修改或删除")
-                next_project = self._revised(current, draft)
+                next_project = self._revised(current, upgrade_project(draft))
                 if next_project is current:
                     return current
                 self._install_assets(directory, assets or {})
@@ -155,6 +174,60 @@ class ProjectRepository:
                 return next_project
         except Timeout as exc:
             raise DomainError("项目正在被其他进程保存") from exc
+
+    def delete(self, project_id: str, expected_revision: int) -> None:
+        """删除完整项目目录；修订不一致时拒绝，避免旧页面误删新版本。"""
+        try:
+            with self._lock(project_id):
+                directory = self._directory(project_id)
+                current = self.load(project_id)
+                if expected_revision != current.revision:
+                    raise DomainError(
+                        f"项目修订冲突：磁盘为{current.revision}，当前删除基于{expected_revision}"
+                    )
+                resolved = directory.resolve(strict=True)
+                if resolved.parent != self.root or resolved == self.root:
+                    raise DomainError("项目删除路径越界")
+                shutil.rmtree(resolved)
+        except Timeout as exc:
+            raise DomainError("项目正在被其他进程使用，暂时无法删除") from exc
+
+    def export_archive(self, project_id: str) -> Path:
+        """生成包含v2中立清单和全部已引用原素材的可移交ZIP，不改写项目目录。"""
+        try:
+            with self._lock(project_id):
+                project = self.load(project_id)
+                directory = self._directory(project_id)
+                paths: set[str] = set()
+                for character in project.characters:
+                    if character.referenceImage:
+                        paths.add(character.referenceImage)
+                    for action in character.actions:
+                        if action.source.kind == "video-extraction" and action.source.video:
+                            paths.add(action.source.video)
+                        for frame in action.frames:
+                            paths.add(frame.assets.source)
+                            if frame.assets.mattingBase:
+                                paths.add(frame.assets.mattingBase)
+                            if frame.assets.current:
+                                paths.add(frame.assets.current)
+                descriptor, filename = tempfile.mkstemp(prefix="action-forge-project-", suffix=".zip")
+                os.close(descriptor)
+                archive_path = Path(filename)
+                try:
+                    with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_STORED) as archive:
+                        archive.writestr("project.json", project.model_dump_json(indent=2) + "\n")
+                        for relative in sorted(paths):
+                            archive.write(directory / relative, arcname=relative)
+                    with zipfile.ZipFile(archive_path) as archive:
+                        if archive.testzip() is not None:
+                            raise DomainError("角色资产包校验失败")
+                    return archive_path
+                except BaseException:
+                    archive_path.unlink(missing_ok=True)
+                    raise
+        except Timeout as exc:
+            raise DomainError("项目正在被保存，暂时无法导出") from exc
 
     def _revised(self, current: CharacterProject,
                  draft: CharacterProject) -> CharacterProject:
@@ -199,8 +272,9 @@ class ProjectRepository:
     @staticmethod
     def _read(path: Path) -> CharacterProject:
         try:
-            return CharacterProject.model_validate_json(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, ValidationError) as exc:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return upgrade_project(CharacterProject.model_validate(data))
+        except (OSError, UnicodeError, json.JSONDecodeError, ValidationError) as exc:
             raise DomainError(f"项目清单无效：{exc}") from exc
 
     @staticmethod

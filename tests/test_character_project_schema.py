@@ -35,8 +35,42 @@ def test_invalid_examples_fail(filename, reason):
 
 def test_unknown_version_and_fields_fail():
     data = valid_project().model_dump()
-    data["formatVersion"] = 2
+    data["formatVersion"] = 3
     with pytest.raises(ValidationError):
+        CharacterProject.model_validate(data)
+
+
+def test_v1_cannot_claim_v2_playback_fields():
+    data = valid_project().model_dump()
+    action = data["characters"][0]["actions"][0]
+    data["formatVersion"] = 1
+    action["playback"] = {"mode": "per-frame"}
+    for frame in action["frames"]:
+        frame["duration"] = {"numerator": 1, "denominator": 12}
+    with pytest.raises(ValidationError, match="v1只支持固定帧率"):
+        CharacterProject.model_validate(data)
+
+
+def test_v2_per_frame_durations_are_required_positive_and_canonical():
+    data = valid_project().model_dump()
+    data["formatVersion"] = 2
+    action = data["characters"][0]["actions"][0]
+    action["playback"] = {"mode": "per-frame"}
+    for frame in action["frames"]:
+        frame["duration"] = {"numerator": 1, "denominator": 12}
+    CharacterProject.model_validate(data)
+    del action["frames"][0]["duration"]
+    with pytest.raises(ValidationError, match="每个启用帧都必须设置时长"):
+        CharacterProject.model_validate(data)
+
+
+def test_constant_fps_cannot_mix_per_frame_duration():
+    data = valid_project().model_dump()
+    data["formatVersion"] = 2
+    data["characters"][0]["actions"][0]["frames"][0]["duration"] = {
+        "numerator": 1, "denominator": 12,
+    }
+    with pytest.raises(ValidationError, match="固定帧率模式不能保存逐帧时长"):
         CharacterProject.model_validate(data)
     data["formatVersion"] = 1
     data["surprise"] = True
@@ -51,6 +85,43 @@ def test_unconfirmed_baseline_is_editable_but_half_baseline_fails():
     data["characters"][0]["origin"] = None
     assert CharacterProject.model_validate(data).characters[0].origin is None
     data["characters"][0]["canvas"] = {"width": 256, "height": 256}
+    with pytest.raises(ValidationError):
+        CharacterProject.model_validate(data)
+
+
+def test_baseline_anchor_and_canvas_are_validated_and_round_trip():
+    data = valid_project().model_dump()
+    character = data["characters"][0]
+    run = next(action for action in character["actions"] if action["id"] == "run")
+    frame_id = run["frames"][0]["id"]
+    character["canvas"] = {"width": 512, "height": 512}
+    character["origin"] = {"x": 256, "y": 440}
+    character["baseline"] = {"actionId": "run", "frameId": frame_id}
+    run["anchor"] = {"frameId": frame_id, "x": 0.5, "y": 0.9}
+    project = CharacterProject.model_validate(data)
+    restored = CharacterProject.model_validate_json(project.model_dump_json())
+    assert restored.characters[0].baseline.frameId == frame_id
+    assert restored.characters[0].actions[0].anchor.y == 0.9
+
+
+@pytest.mark.parametrize("change", ["unknown-action", "unknown-frame", "disabled-frame", "anchor-range"])
+def test_invalid_baseline_and_anchor_references_fail(change):
+    data = valid_project().model_dump()
+    character = data["characters"][0]
+    run = next(action for action in character["actions"] if action["id"] == "run")
+    frame_id = run["frames"][0]["id"]
+    character["canvas"] = {"width": 512, "height": 512}
+    character["origin"] = {"x": 256, "y": 440}
+    character["baseline"] = {"actionId": "run", "frameId": frame_id}
+    run["anchor"] = {"frameId": frame_id, "x": 0.5, "y": 0.9}
+    if change == "unknown-action":
+        character["baseline"]["actionId"] = "missing"
+    elif change == "unknown-frame":
+        character["baseline"]["frameId"] = "missing"
+    elif change == "disabled-frame":
+        run["frames"][0]["enabled"] = False
+    else:
+        run["anchor"]["x"] = 1.1
     with pytest.raises(ValidationError):
         CharacterProject.model_validate(data)
 

@@ -11,6 +11,7 @@ import time
 import uuid
 import zipfile
 from copy import deepcopy
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -123,6 +124,7 @@ class Batch:
     runner: object | None = None
     revisions: dict[str, int] = field(default_factory=dict)
     modified: set[str] = field(default_factory=set)
+    cached_paths: dict = field(default_factory=dict)
 
     def public(self):
         return {"id": self.id, "sourceJobId": self.job_id, "processingPolicy": self.manifest["derivation"].get("processingPolicy"), "status": self.status if self.finished.is_set() else ("cancelling" if self.cancel.is_set() else "running"),
@@ -226,7 +228,8 @@ class BatchManager:
         try:
             for path in (auto, current, thumbs):
                 path.mkdir(parents=True)
-            with self.model_factory() as runner:
+            needs_model = any(frame['id'] not in batch.cached_paths and not (batch.parent and frame['id'] in batch.parent.revisions) for frame in batch.manifest['frames'])
+            with (self.model_factory() if needs_model else nullcontext(None)) as runner:
                 batch.runner = runner
                 for index, (source, frame) in enumerate(zip(batch.source_paths, batch.manifest["frames"])):
                     if batch.cancel.is_set():
@@ -237,7 +240,14 @@ class BatchManager:
                         raise DomainError("批量抠图磁盘预算不足")
                     name = f"frame_{index+1:06d}.png"
                     output = auto / name
-                    if batch.parent and frame["id"] in batch.parent.revisions:
+                    if frame['id'] in batch.cached_paths:
+                        cached = batch.cached_paths[frame['id']]
+                        for variant, folder in (("auto", auto), ("current", current)):
+                            shutil.copyfile(cached[variant], folder / name)
+                        with Image.open(current / name) as image:
+                            image.thumbnail((256, 256))
+                            image.save(thumbs / name, format='PNG')
+                    elif batch.parent and frame["id"] in batch.parent.revisions:
                         for variant, folder in (("auto", auto), ("current", current), ("thumb", thumbs)):
                             shutil.copyfile(self.frame_file(batch.parent.id, frame["id"], variant), folder / name)
                     else:

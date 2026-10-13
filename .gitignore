@@ -1,6 +1,9 @@
 .venv/
 .cache/
+.cache-workflow/
+.cache-workflow-*/
 output/
+.godot/
 node_modules/
 test-results/
 playwright-report/
@@ -11,3 +14,5 @@ __pycache__/
 .env.*
 !.env.example
 *.log
+# 3D构建产物从源码重建，不把第三方着色器打包结果纳入源码提交。
+web/labs/motion/*.bundle.js

@@ -1,0 +1,52 @@
+.matting-workbench[hidden]{display:none}
+.transparent-preview .frame-player-stage img{background:repeating-conic-gradient(#292929 0 25%,#202020 0 50%) 0/12px 12px}
+.matting-layout{display:grid;flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 272px;grid-template-rows:minmax(0,1fr) 220px;background:#292929;gap:1px}
+.matting-preview{min-width:0;min-height:0;background:#111;display:flex;flex-direction:column;padding:0 20px 8px}
+.matting-preview>header{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#929292;font-size:12px}
+.matting-stage{position:relative;width:min(100%,760px);flex:1;min-height:0;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:3px;background:#111;touch-action:none;cursor:grab}
+.matting-stage img{max-width:none;max-height:none;flex-shrink:0;object-fit:contain;user-select:none;pointer-events:none;transform-origin:center;background:repeating-conic-gradient(#292929 0 25%,#202020 0 50%) 0/20px 20px}
+.matting-stage[data-background=dark] img{background:#0b0b0b}.matting-stage[data-background=light] img{background:#e5e5e5}
+.matting-stage[data-background=violet] img{background:#7253b0}
+.matting-background .matting-swatch{width:20px;height:20px;min-width:20px;padding:0;border:1px solid #555;border-radius:5px;cursor:pointer;background:#202020 repeating-conic-gradient(#292929 0 25%,#202020 0 50%) 0/10px 10px}
+.matting-swatch[data-background=light]{background:#e5e5e5}.matting-swatch[data-background=dark]{background:#0b0b0b}.matting-swatch[data-background=violet]{background:#7253b0}
+.matting-background .matting-swatch[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:3px}.matting-background .matting-swatch:hover{border-color:#ccc}
+.matting-comparison{position:relative;flex-shrink:0;transform-origin:center;--split:50%;--inverse-zoom:1}
+.matting-comparison>img{position:absolute;inset:0;width:100%;height:100%}
+.matting-comparison>.matting-source-overlay{clip-path:inset(0 calc(100% - var(--split)) 0 0)}
+.matting-comparison[hidden],.matting-comparison>[hidden],.matting-background[hidden]{display:none}
+.matting-divider{position:absolute;inset:0 auto 0 var(--split);width:calc(2px * var(--inverse-zoom));background:var(--accent);pointer-events:none;z-index:2}
+.matting-compare-grip{position:absolute;top:50%;left:50%;display:flex;align-items:center;justify-content:center;width:26px;height:38px;transform:translate(-50%,-50%) scale(var(--inverse-zoom));border:1px solid #80cfff;border-radius:5px;background:#202b32;color:#e6f5ff}.matting-compare-grip svg{width:12px;height:16px;flex-shrink:0}
+.matting-divider span{position:absolute;top:calc(10px * var(--inverse-zoom));padding:4px 7px;border-radius:3px;background:#171717dd;color:#eee;font-size:11px;white-space:nowrap;transform:scale(var(--inverse-zoom));transform-origin:top right}
+.matting-divider span:first-child{right:calc(10px * var(--inverse-zoom))}.matting-divider span:nth-of-type(2){left:calc(10px * var(--inverse-zoom));transform-origin:top left}
+.matting-compare-slider{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:3;touch-action:none}
+.matting-comparison:has(.matting-compare-slider:focus-visible){outline:calc(2px * var(--inverse-zoom)) solid var(--accent)}
+.matting-preview-controls .matting-background{justify-self:end;gap:8px;white-space:nowrap}
+.matting-stage img[hidden]{display:none}
+.matting-preview-controls{min-height:50px;flex-shrink:0;display:grid;grid-template-columns:minmax(100px,1fr) auto minmax(190px,1fr);align-items:center;gap:12px;font-size:12px;color:#999}
+.matting-zoom-tools,.matting-play-tools{display:flex;align-items:center;gap:12px}.matting-zoom-tools{justify-content:flex-end}.matting-play-tools{justify-content:center}
+.matting-preview-controls [data-player]{width:210px}.matting-preview-controls .frame-player{height:auto}.matting-preview-controls .frame-player-stage[hidden]{display:none}
+.matting-preview-controls button.quiet-button{background:none;border-color:transparent;padding:0 6px;height:30px;font-size:12px}.matting-preview-controls label{display:flex;align-items:center;gap:6px}
+.matting-preview-controls input{width:46px;height:28px;border:1px solid #343434;background:#242424;color:#eee;border-radius:4px;padding:0 6px;font:inherit}
+.matting-settings{background:#191919;min-height:0;display:flex;flex-direction:column;padding:14px 16px;gap:10px;overflow:auto}
+.matting-settings h2{margin:0;font-size:14px;font-weight:500}.matting-settings dl{margin:0;border-bottom:1px solid #2c2c2c;padding-bottom:12px}.matting-settings dl div{display:flex;justify-content:space-between;font-size:12px;line-height:32px}.matting-settings dt{color:#999}.matting-settings dd{margin:0;font-variant-numeric:tabular-nums}
+.matting-background{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999}.matting-workbench select{background:#232323;color:#ddd;border:1px solid #333;border-radius:4px;padding:5px;font:inherit}
+.matting-settings>button{height:34px;font-size:12px}.matting-progress{display:flex;flex-direction:column;gap:8px;font-size:12px;color:#999}.matting-progress progress{width:100%;height:4px;accent-color:var(--accent)}
+.matting-workbench [data-error]{margin:0;font-size:12px;color:#e09a9a;overflow-wrap:anywhere}.matting-workbench [data-error]:empty{display:none}
+.matting-progress:has([data-progress]:empty){display:none}
+.matting-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #2b2b2b;flex-shrink:0}.matting-actions button{height:36px;padding:0 10px;font-size:12px;flex:1;white-space:nowrap}.matting-actions button[hidden]{display:none}
+.matting-timeline{grid-column:1/-1;min-width:0;min-height:0;background:#171717;display:flex;flex-direction:column;padding:12px 20px 10px;gap:12px}.matting-timeline>header{display:flex;gap:20px;align-items:center;font-size:12px;color:#999;height:28px;flex-shrink:0}.matting-timeline>header label{margin-left:auto;display:flex;align-items:center;gap:8px}
+.matting-strip{--frame-width:104px;display:flex;flex:1;min-height:0;gap:7px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 16px;scrollbar-width:thin;scrollbar-color:#444 transparent}
+.matting-frame{position:relative;flex:0 0 calc(var(--frame-width) + 12px);height:calc(var(--frame-width)*.5625 + 64px);display:flex;flex-direction:column;gap:6px;align-items:stretch;border:1px solid #333;background:#222;border-radius:5px;padding:6px;color:#999;font:11px/1.4 inherit;cursor:pointer}
+.matting-frame>span:first-child{text-align:left;font-size:11px}.matting-frame>span:last-of-type{text-align:center;font-size:11px}.matting-frame img{width:var(--frame-width);height:calc(var(--frame-width)*.5625);object-fit:contain;background:repeating-conic-gradient(#292929 0 25%,#202020 0 50%) 0/12px 12px;pointer-events:none}
+.matting-frame.is-active{outline:2px solid var(--accent);outline-offset:-1px;background:#20313a;color:#e8f6ff}.matting-frame.is-active:after{content:'';position:absolute;inset:0 auto 0 50%;width:1px;background:#8bd2f777;pointer-events:none}.matting-frame.is-pending{border-style:dashed}
+.matting-frame-badge{position:absolute;right:5px;top:6px;font-size:10px;font-style:normal;color:#8ac9ad;background:#222c}.matting-frame.is-pending .matting-frame-badge{color:#a9a9a9}
+.matting-workbench [data-status]{margin-left:auto;font-size:12px;color:#999}.matting-workbench [data-back]{display:flex;align-items:center;gap:8px;height:34px;font-size:12px}.matting-workbench [data-back] svg{width:16px;height:16px}
+.matting-workbench .extract-workbench-header [data-title]{min-width:0}
+.matting-workbench .extract-workbench-header [data-status],.matting-workbench .extract-workbench-header [data-back]{flex-shrink:0;white-space:nowrap}
+.matting-reprocess{max-width:400px;color:#eee;background:#202020;border:1px solid #3b3b3b;border-radius:8px;padding:24px}.matting-reprocess h2{font-size:16px}.matting-reprocess p{color:#aaa;font-size:13px}.matting-reprocess>div{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}.matting-reprocess::backdrop,.workflow-repair-dialog::backdrop{background:#0009}
+.workflow-repair-dialog{width:calc(100vw - 48px);height:calc(100dvh - 48px);max-width:1600px;max-height:100dvh;padding:0;color:#ddd;background:#171717;border:1px solid #3a3a3a;border-radius:8px;overflow:hidden}
+.workflow-repair-dialog[open]{display:flex;flex-direction:column}.workflow-repair-dialog>header{display:flex;align-items:center;gap:20px;min-height:52px;padding:0 16px;border-bottom:1px solid #303030}.workflow-repair-dialog>header strong{font-size:13px;font-weight:500}.workflow-repair-dialog [data-repair-state]{margin-left:auto;color:#999;font-size:12px}.workflow-repair-dialog [data-repair-close]{height:32px;font-size:12px}.workflow-repair-dialog iframe{flex:1;min-height:0;width:100%;border:0}.workflow-repair-dialog p{color:#e39c9c;font-size:12px;margin:0;padding:8px 16px}.workflow-repair-dialog p:empty{display:none}
+.workflow-repair-dialog [data-repair-close]{width:32px;min-width:32px;padding:0;display:grid;place-items:center;border-color:transparent;background:transparent;border-radius:5px}.workflow-repair-dialog [data-repair-close] svg{width:18px;height:18px}.workflow-repair-dialog [data-repair-close]:hover{background:#303030;color:#fff}
+@media(max-height:650px) and (min-width:851px){.matting-layout{grid-template-rows:minmax(0,1fr) 190px}.matting-settings{padding:10px 14px;gap:7px}.matting-settings dl div{line-height:25px}.matting-settings dl{padding-bottom:7px}.matting-preview-controls{min-height:42px}.matting-timeline{gap:7px;padding:8px 16px}.matting-settings>button{min-height:28px}.matting-actions{padding-top:8px}}
+@media(max-width:1100px){.matting-preview-controls{grid-template-columns:1fr 1fr;gap:6px;padding-top:6px}.matting-zoom-tools{justify-content:flex-start}.matting-play-tools{grid-column:1/-1;grid-row:2}.matting-preview-controls .matting-background{grid-column:2;grid-row:1}}
+@media(max-width:850px){.matting-layout{grid-template-columns:minmax(0,1fr) 220px}.matting-preview{padding:0 10px 8px}.matting-zoom-tools,.matting-play-tools{gap:4px}.matting-settings{padding:14px 12px}.matting-actions button{flex-basis:100%}}

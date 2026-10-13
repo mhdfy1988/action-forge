@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" role="img" aria-labelledby="title desc">
+<title id="title">全身控制模型与显示骨架的区别</title><desc id="desc">控制点和固定条件进入连接网络，联合求解后输出模型骨骼姿势。求解影响可双向传播，不改变模型父子层级。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="#66b5ff"/></marker></defs>
+<rect width="960" height="430" rx="12" fill="#14171b"/>
+<g font-family="Microsoft YaHei, sans-serif" fill="#e6edf4" font-size="17">
+<text x="30" y="39" font-size="23">从控制意图到完整身体姿势</text>
+<rect x="30" y="78" width="240" height="282" rx="8" fill="#20262e"/>
+<text x="48" y="112">用户控制与输入</text><text x="48" y="157">拖动目标：位置 / 朝向</text><text x="48" y="198">固定：位置 / 朝向可分开</text><text x="48" y="239">允许活动范围与柔硬程度</text><text x="48" y="280">当前姿势 / 参考姿势</text><text x="48" y="321" fill="#a5b4c4">不直接改某一个骨骼坐标</text>
+<text x="348" y="100">求解连接网络（概念图）</text>
+<g stroke="#66b5ff" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"><path d="M480 140V180"/><path d="M463 198L381 231"/><path d="M497 198L579 231"/><path d="M480 218V258"/><path d="M462 292L402 325"/><path d="M498 292L558 325"/></g>
+<g fill="#293848" stroke="#66b5ff"><circle cx="480" cy="128" r="18"/><circle cx="480" cy="199" r="20"/><circle cx="364" cy="237" r="18"/><circle cx="596" cy="237" r="18"/><circle cx="480" cy="276" r="18"/><circle cx="386" cy="338" r="18"/><circle cx="574" cy="338" r="18"/></g>
+<g fill="#e6edf4" font-size="14" text-anchor="middle"><text x="480" y="133">头</text><text x="480" y="204">胸</text><text x="364" y="242">臂</text><text x="596" y="242">臂</text><text x="480" y="281">骨盆</text><text x="386" y="343">腿</text><text x="574" y="343">腿</text></g>
+<path d="M280 210H328" stroke="#66b5ff" stroke-width="2" marker-end="url(#arrow)"/><path d="M632 210H687" stroke="#66b5ff" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="700" y="78" width="230" height="282" rx="8" fill="#20262e"/><text x="721" y="112">联合求解与输出</text><text x="721" y="157">目标与约束一起处理</text><text x="721" y="198">调整参与部位的姿态</text><text x="721" y="239">报告未满足的目标</text><text x="721" y="280">映射到显示骨架</text><text x="721" y="321">模型网格随骨架变形</text>
+<text x="30" y="401" fill="#a5b4c4" font-size="14">双向箭头表示求解影响，不是修改骨骼父子关系；并非每次拖动所有部位都必须移动。</text>
+</g></svg>

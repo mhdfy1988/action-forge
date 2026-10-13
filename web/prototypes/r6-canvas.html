@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动作工坊 · 无限画布设计稿</title>
+  <link rel="stylesheet" href="./r6-canvas.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-glyph"><i></i><i></i><i></i></span><strong>动作工坊</strong></div>
+      <button class="project-switch"><span class="avatar">浣</span><span><b>浣熊战士</b><em>角色画布 · 3 个动作</em></span><i>⌄</i></button>
+      <div class="top-actions">
+        <span class="save-state"><i></i>所有更改已保存</span>
+        <button class="ghost">播放全部动作</button>
+        <button class="primary">输出角色资产</button>
+      </div>
+    </header>
+
+    <aside class="tool-dock" aria-label="画布工具">
+      <button class="tool is-active" title="选择">↖</button>
+      <button class="tool" title="抓手">✥</button>
+      <span class="dock-line"></span>
+      <button class="tool" title="添加素材">＋</button>
+      <button class="tool" title="添加文字">T</button>
+      <button class="tool" title="添加分组">▣</button>
+      <span class="dock-spacer"></span>
+      <button class="tool" title="帮助">?</button>
+    </aside>
+
+    <main class="canvas-shell" id="canvasShell">
+      <div class="canvas" id="canvas">
+        <svg class="connections" viewBox="0 0 1940 1080" aria-hidden="true">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+            <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+          </defs>
+          <path class="flow main" d="M 310 400 C 350 400 350 180 400 180"></path>
+          <path class="flow main" d="M 310 400 C 350 400 350 530 400 530"></path>
+          <path class="flow muted" d="M 310 400 C 350 400 350 860 400 860"></path>
+          <path class="flow main" d="M 640 180 C 675 180 670 205 710 205"></path>
+          <path class="flow main" d="M 865 205 C 900 205 895 180 930 180"></path>
+          <path class="flow main" d="M 1210 180 C 1240 180 1240 205 1270 205"></path>
+          <path class="flow main" d="M 1450 205 C 1480 205 1480 180 1510 180"></path>
+          <path class="flow main" d="M 640 530 C 675 530 670 555 710 555"></path>
+          <path class="flow main" d="M 865 555 C 900 555 895 530 930 530"></path>
+          <path class="flow warn" d="M 1210 530 C 1240 530 1240 555 1270 555"></path>
+          <path class="flow warn dashed" d="M 1450 555 C 1480 555 1480 530 1510 530"></path>
+          <path class="flow muted dashed" d="M 640 860 C 1080 860 1460 865 1780 545"></path>
+          <path class="flow main" d="M 1690 255 C 1765 255 1725 415 1780 415"></path>
+          <path class="flow warn" d="M 1690 605 C 1765 605 1725 480 1780 480"></path>
+          <path class="flow muted dashed" d="M 1690 955 C 1765 955 1740 545 1780 545"></path>
+          <path class="flow main" d="M 1870 600 C 1870 630 1870 650 1870 680"></path>
+        </svg>
+        <span class="flow-caption caption-reference">角色参考</span>
+        <span class="flow-caption caption-run-frames">12 张原始帧</span>
+        <span class="flow-caption caption-run-alpha">透明帧</span>
+        <span class="flow-caption caption-jump-frames">8 张原始帧</span>
+        <span class="flow-caption caption-ready">进入角色资产</span>
+
+        <section class="lane lane-run"><span class="lane-label"><i></i>跑步动作</span></section>
+        <section class="lane lane-jump"><span class="lane-label"><i></i>跳跃动作</span></section>
+        <section class="lane lane-attack"><span class="lane-label"><i></i>攻击动作</span></section>
+
+        <article class="node source-node selected pos-source" data-node="source">
+          <header><span class="kind">角色源</span><button>•••</button></header>
+          <div class="portrait"><div class="character"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>浣</b></div><span class="reference-badge">基准参考</span></div>
+          <div class="node-copy"><h3>浣熊战士</h3><p>正侧面角色参考图</p></div>
+          <footer><span class="state good">● 已确认</span><span>1 张图片</span></footer>
+          <i class="port out"></i>
+        </article>
+
+        <article class="node media-node pos-run-video" data-node="runVideo">
+          <header><span class="kind">动作视频 · 已选版本</span><button>•••</button></header>
+          <div class="video-preview run"><div class="character small"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span></div><span class="play">▶</span><em>00:04</em></div>
+          <div class="node-copy"><h3>跑步 · 版本 03</h3><p>参考图生成 · 4.0 秒 · 1280 × 720</p></div>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node operation-node complete pos-run-extract" data-node="extractRun">
+          <i class="port in"></i><span class="operation-symbol">▥</span><div><h3>抽帧</h3><p>12 帧/秒 · 全片</p></div><span class="operation-state">完成 · 12 帧</span><i class="port out"></i>
+        </article>
+
+        <article class="node frames-node pos-run-frames" data-node="organizeRun">
+          <header><span class="kind">帧工作区</span><span class="state good">● 已完成</span></header>
+          <div class="frame-strip"><i>01</i><i>02</i><i>03</i><i>04</i><i>05</i><i>06</i></div>
+          <div class="node-copy"><h3>跑步序列</h3><p><b>12</b> 帧 · 循环流畅度 94%</p></div>
+          <footer><button>打开帧工作区</button><span>01—12</span></footer>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node operation-node complete pos-run-matting" data-node="mattingRun">
+          <i class="port in"></i><span class="operation-symbol split">◐</span><div><h3>透明化处理</h3><p>抠图 · 去绿边 · 精修</p></div><span class="operation-state">完成 · 12/12</span><i class="port out"></i>
+        </article>
+
+        <article class="node result-node pos-run-result" data-node="runAsset">
+          <header><span class="kind">动作资产</span><span class="check">✓</span></header>
+          <div class="result-preview"><div class="character mid"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>跑</b></div><span class="ground"></span></div>
+          <div class="node-copy"><h3>跑步</h3><p>12 帧 · 循环 · 已校准</p></div>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node media-node pos-jump-video" data-node="jumpVideo">
+          <header><span class="kind">动作视频 · 已选版本</span><button>•••</button></header>
+          <div class="video-preview jump"><div class="character small jumping"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span></div><span class="play">▶</span><em>00:03</em></div>
+          <div class="node-copy"><h3>跳跃 · 版本 02</h3><p>参考图生成 · 3.0 秒 · 1280 × 720</p></div>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node operation-node complete pos-jump-extract" data-node="extractJump">
+          <i class="port in"></i><span class="operation-symbol">▥</span><div><h3>抽帧</h3><p>12 帧/秒 · 已裁切</p></div><span class="operation-state">完成 · 8 帧</span><i class="port out"></i>
+        </article>
+
+        <article class="node frames-node warning pos-jump-frames" data-node="organizeJump">
+          <header><span class="kind">帧工作区</span><span class="state warn">● 需要确认</span></header>
+          <div class="frame-strip jump-strip"><i>01</i><i>02</i><i>03</i><i>04</i><i>05</i><i>06</i></div>
+          <div class="node-copy"><h3>跳跃序列</h3><p><b>8</b> 帧 · 已找到 2 个循环候选</p></div>
+          <footer><button>打开帧工作区</button><span>01—08</span></footer>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node operation-node attention pos-jump-matting" data-node="mattingJump">
+          <i class="port in"></i><span class="operation-symbol split">◐</span><div><h3>透明化处理</h3><p>可先运行，稍后再整理</p></div><span class="operation-state">尚未开始</span><i class="port out"></i>
+        </article>
+
+        <article class="node result-node pending pos-jump-result" data-node="jumpAsset">
+          <header><span class="kind">动作资产</span><span class="pending-dot">!</span></header>
+          <div class="result-preview"><div class="character mid jumping"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>跳</b></div><span class="ground"></span></div>
+          <div class="node-copy"><h3>跳跃</h3><p>8 帧 · 等待校准</p></div>
+          <i class="port in"></i><i class="port out"></i>
+        </article>
+
+        <article class="node media-node empty-node pos-attack-source" data-node="attackEmpty">
+          <i class="port in"></i><div class="empty-drop"><span>＋</span><h3>添加攻击动作素材</h3><p>拖入视频或从图片生成</p></div><i class="port out"></i>
+        </article>
+
+        <article class="node hub-node pos-character-asset" data-node="characterAsset">
+          <header><span>角色资产</span><b>2 / 3</b></header>
+          <div class="hub-emblem"><div class="character mid"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>浣</b></div></div>
+          <h3>浣熊战士</h3><div class="hub-actions"><span class="ready">跑步</span><span class="waiting">跳跃</span><span>攻击</span></div>
+          <footer>画布 512 × 512<br>原点 256, 448</footer>
+          <i class="port in a"></i><i class="port in b"></i><i class="port in c"></i><i class="port out"></i>
+        </article>
+
+        <article class="node engine-node pos-engine" data-node="engine">
+          <i class="port in"></i><div class="engine-mark">G</div><div><span class="kind">引擎连接</span><h3>Godot 项目</h3><p>实时预览 · 尚未连接</p></div><button>连接</button>
+        </article>
+      </div>
+
+      <div class="canvas-title"><div><strong>角色动作流</strong><span>素材、过程和结果都保留在画布中</span></div><div class="canvas-legend"><i class="asset"></i>素材 <i class="process"></i>处理 <i class="result"></i>结果</div></div>
+      <div class="zoom-controls"><button id="zoomOut">−</button><button id="zoomFit">适合</button><span id="zoomValue">64%</span><button id="zoomIn">＋</button></div>
+      <div class="minimap"><div class="map-content"><i></i><i></i><i></i><b></b></div><span class="map-window"></span></div>
+    </main>
+
+    <aside class="inspector" id="inspector">
+      <header><div><span class="overline">当前节点</span><h2 id="inspectTitle">浣熊战士</h2></div><button id="closeInspector">×</button></header>
+      <div class="inspector-tabs"><button class="is-active">操作</button><button>输入输出</button><button>版本记录</button></div>
+      <div class="inspect-preview"><div class="character preview"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>浣</b></div><div class="preview-copy"><b id="inspectKind">角色源节点</b><span id="inspectLinks">上游 0 · 下游 3</span></div></div>
+      <section><h3>节点状态</h3><div class="status-card"><span id="inspectStatus">角色基准已确认</span><b>✓</b></div></section>
+      <section><h3>内容</h3><dl id="inspectDetails"><div><dt>类型</dt><dd>角色参考图</dd></div><div><dt>规格</dt><dd>1024 × 1024 PNG</dd></div><div><dt>用途</dt><dd>所有动作的形象基准</dd></div></dl></section>
+      <section class="node-rule"><h3>这个节点负责什么</h3><p id="inspectDescription">保存角色不可变的视觉参考。它可以分出多个动作，但不会被后续抽帧或抠图覆盖。</p></section>
+      <footer><button class="ghost full">在画布中定位</button><button class="primary full" id="inspectAction">更换参考图</button></footer>
+    </aside>
+
+    <section class="focus-layer" id="frameWorkspace" aria-hidden="true">
+      <div class="focus-backdrop"></div>
+      <div class="focus-panel">
+        <header class="focus-header">
+          <button class="focus-back" id="closeFrameWorkspace">← 返回画布</button>
+          <div class="focus-path"><span>浣熊战士</span><i>/</i><span>跳跃</span><i>/</i><strong>帧工作区</strong></div>
+          <div class="focus-actions"><span><i></i>自动保存</span><button class="ghost">播放检查</button><button class="primary" id="finishFrameWorkspace">完成本次整理</button></div>
+        </header>
+
+        <div class="focus-body">
+          <article class="focus-preview panel-block">
+            <header><div><span class="overline">当前查看</span><h2>第 04 帧</h2></div><div class="preview-tools"><button>−</button><span>适合</span><button>＋</button></div></header>
+            <div class="focus-stage">
+              <div class="stage-safe-area">
+                <div class="character focus-character jumping"><i class="ear left"></i><i class="ear right"></i><span class="mask"></span><b>跳</b></div>
+                <span class="focus-ground"></span><span class="focus-origin"></span>
+              </div>
+            </div>
+            <footer class="focus-player"><button>←</button><button class="player-main">▶ 播放</button><label><input value="12" readonly> 帧/秒</label><button>→</button><span>04 / 08</span></footer>
+          </article>
+
+          <article class="focus-frames panel-block">
+            <header><div><span class="overline">当前序列</span><h2>跳跃 · 8 帧</h2></div><div class="sequence-state"><span class="warn-dot"></span>首尾待确认</div></header>
+            <div class="frame-work-grid" id="focusFrameGrid"></div>
+            <div class="loop-suggestion"><div><span class="loop-icon">↻</span><p><b>发现 2 个循环候选</b><em>建议先比较首尾衔接，再决定是否裁切。</em></p></div><button>查看候选</button></div>
+          </article>
+
+          <aside class="frame-inspector panel-block">
+            <header><span class="overline">当前帧</span><h2>04</h2></header>
+            <section><h3>帧状态</h3><div class="frame-status-line"><span>已保留</span><b>✓</b></div><div class="frame-status-line"><span>透明化处理</span><em>尚未运行</em></div></section>
+            <section><h3>来源</h3><dl><div><dt>视频位置</dt><dd>00:01.250</dd></div><div><dt>原始帧</dt><dd>#030</dd></div><div><dt>当前顺序</dt><dd>04 / 08</dd></div></dl></section>
+            <section><h3>单帧操作</h3><button class="inspect-row">查看原图 <span>→</span></button><button class="inspect-row">进入精修 <span>→</span></button></section>
+          </aside>
+        </div>
+
+        <footer class="focus-toolbar">
+          <div><button class="ghost">全选</button><button class="ghost">取消勾选</button><button class="danger-button">删除勾选帧</button></div>
+          <span>拖动卡片调整顺序 · 双击单帧进入精修</span>
+          <div><button class="ghost">撤销</button><button class="ghost">恢复</button></div>
+        </footer>
+      </div>
+    </section>
+  </div>
+  <script src="./r6-canvas.js"></script>
+</body>
+</html>

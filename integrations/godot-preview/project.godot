@@ -1,0 +1,26 @@
+; Engine configuration file.
+; Action Forge Godot live preview client.
+
+config_version=5
+
+[application]
+
+config/name="Action Forge Preview"
+run/main_scene="res://preview.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1100
+window/size/viewport_height=760
+window/size/window_width_override=1100
+window/size/window_height_override=760
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/default_filters/texture_filter=0
+environment/defaults/default_clear_color=Color(0.11, 0.13, 0.14, 1)

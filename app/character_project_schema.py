@@ -77,10 +77,38 @@ class Playback(StrictModel):
     fps: FPS
 
 
+class PerFramePlayback(StrictModel):
+    mode: Literal["per-frame"]
+
+
+FramePlayback = Annotated[Playback | PerFramePlayback, Field(discriminator="mode")]
+
+
+class FrameDuration(Rational):
+    @model_validator(mode="after")
+    def positive_and_bounded(self) -> FrameDuration:
+        if self.numerator <= 0 or self.numerator > self.denominator * 60:
+            raise ValueError("逐帧时长必须大于0且不超过60秒")
+        if self.denominator > 1_000_000:
+            raise ValueError("逐帧时长精度不能细于百万分之一秒")
+        return self
+
+
 class Transform(StrictModel):
     offset: Point
     scale: Scale
     rotationDegrees: float
+
+
+class ActionAnchor(StrictModel):
+    frameId: ID
+    x: Annotated[float, Field(ge=0, le=1)]
+    y: Annotated[float, Field(ge=0, le=1)]
+
+
+class CharacterBaseline(StrictModel):
+    actionId: ID
+    frameId: ID
 
 
 class Extraction(StrictModel):
@@ -146,6 +174,7 @@ class ActionFrame(StrictModel):
     id: ID
     revision: REVISION
     enabled: StrictBool
+    duration: FrameDuration | None = None
     assets: FrameAssets
     source: FrameOrigin
 
@@ -169,8 +198,9 @@ class Action(StrictModel):
     name: NAME
     revision: REVISION
     loop: StrictBool
-    playback: Playback
+    playback: FramePlayback
     transform: Transform
+    anchor: ActionAnchor | None = None
     source: Annotated[VideoSource | ImageSequenceSource, Field(discriminator="kind")]
     frames: list[ActionFrame]
     events: list[ActionEvent]
@@ -179,9 +209,17 @@ class Action(StrictModel):
     def valid_references(self) -> Action:
         unique_ids(self.frames, "帧")
         unique_ids(self.events, "事件")
+        has_durations = [frame.duration is not None for frame in self.frames]
+        if self.playback.mode == "per-frame" and any(
+                frame.enabled and frame.duration is None for frame in self.frames):
+            raise ValueError("逐帧时长模式下每个启用帧都必须设置时长")
+        if self.playback.mode == "constant-fps" and any(has_durations):
+            raise ValueError("固定帧率模式不能保存逐帧时长")
         enabled = {frame.id for frame in self.frames if frame.enabled}
         if any(event.frameId not in enabled for event in self.events):
             raise ValueError("事件必须引用同一动作中的启用帧")
+        if self.anchor is not None and self.anchor.frameId not in enabled:
+            raise ValueError("动作锚点必须引用该动作中的启用帧")
         return self
 
 
@@ -192,6 +230,7 @@ class Character(StrictModel):
     referenceImage: PATH | None
     canvas: Size | None
     origin: Point | None
+    baseline: CharacterBaseline | None = None
     scale: Scale
     actions: list[Action]
 
@@ -209,6 +248,18 @@ class Character(StrictModel):
             if not (0 <= self.origin.x <= self.canvas.width and
                     0 <= self.origin.y <= self.canvas.height):
                 raise ValueError("原点超出共享画布")
+        if self.baseline is not None:
+            if self.canvas is None or self.origin is None:
+                raise ValueError("设置基准帧前必须先设置共享画布与原点")
+            baseline_action = next((item for item in self.actions
+                                    if item.id == self.baseline.actionId), None)
+            if baseline_action is None or not any(
+                    frame.id == self.baseline.frameId and frame.enabled
+                    for frame in baseline_action.frames):
+                raise ValueError("基准必须引用当前角色中的启用动作帧")
+            if (baseline_action.anchor is None or
+                    baseline_action.anchor.frameId != self.baseline.frameId):
+                raise ValueError("基准动作必须在基准帧上设置锚点")
         for action in self.actions:
             prefix = f"assets/characters/{self.id}/actions/{action.id}/"
             paths = [path for frame in action.frames for path in
@@ -231,7 +282,7 @@ class MigrationRecord(StrictModel):
 
 
 class CharacterProject(StrictModel):
-    formatVersion: Literal[1]
+    formatVersion: Literal[1, 2]
     kind: Literal["action-forge-project"]
     id: ID
     name: NAME
@@ -251,7 +302,25 @@ class CharacterProject(StrictModel):
         action_ids = {action.id for character in self.characters for action in character.actions}
         if any(record.actionId not in action_ids for record in self.migrations):
             raise ValueError("迁移记录必须引用项目中的动作")
+        if self.formatVersion == 1 and any(
+                action.playback.mode != "constant-fps" or
+                any(frame.duration is not None for frame in action.frames)
+                for character in self.characters for action in character.actions):
+            raise ValueError("角色项目v1只支持固定帧率")
         return self
+
+
+def upgrade_project(project: CharacterProject) -> CharacterProject:
+    """把v1固定帧率项目纯内存升级为v2；不改写资产或来源时间。"""
+    if project.formatVersion == 2:
+        return project
+    data = project.model_dump(mode="python")
+    data["formatVersion"] = 2
+    for character in data["characters"]:
+        for action in character["actions"]:
+            for frame in action["frames"]:
+                frame["duration"] = None
+    return CharacterProject.model_validate(data)
 
 
 def validate_project_assets(project: CharacterProject, root: Path) -> None:

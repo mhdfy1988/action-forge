@@ -1,80 +1,110 @@
-# 引擎实时预览协议（R0-D）
+# 引擎实时预览协议（R4）
 
 ## 目标与边界
 
-角色项目仍是编辑真值。预览连接只把当前已保存的角色动作投影到游戏引擎，不让引擎反写项目；连接断开或引擎未运行不妨碍项目编辑。正式导出使用独立适配器和产物校验，不能把预览缓存当成正式游戏资产。
+角色项目仍是编辑真值。Godot 实时预览只接收角色、动作、帧、逐帧时长、事件和空间参数，不向项目回写，也不修改用户的 Godot 工程。预览桥仅绑定 `127.0.0.1`，运行态会话、令牌与快照仅保存在内存；应用关闭、会话过期或显式断开后即失效。正式导入/应用到用户工程是后续独立能力，不属于 R4。
 
-R3首个目标是本机Godot预览；核心协议为引擎中立JSON消息，Godot适配层处理图片加载与动画显示。JavaScript适配器留到R5。传输候选为仅监听回环地址的WebSocket消息加只读图片端点；R3实现前需对照Godot当前官方接口确认选型，本文件不声称连接已实现。
+浏览器通过带短期令牌的 HTTP `PUT` 发布当前编辑态；Godot 原生客户端通过带令牌的 WebSocket 订阅。WebSocket 用于低频编辑消息，不用于高速游戏联网。帧图像由 Godot 按帧 ID 调用本机只读 HTTP 接口获取，绝不接受客户端提供的绝对路径或任意 URL。
 
-## 完整快照
-
-只有`runtimeReady`角色才能发正式可播放快照；未校准角色可在工作区查看，但预览连接应返回`BASELINE_REQUIRED`，不能以临时中心点伪装基准。快照包含：
-
-```json
-{
-  "type": "snapshot", "protocolVersion": 1, "messageId": "m-001",
-  "projectId": "raccoon-project", "projectRevision": 3,
-  "character": {
-    "id": "raccoon", "revision": 2,
-    "canvas": {"width": 847, "height": 714},
-    "origin": {"x": 423, "y": 650},
-    "scale": {"x": 1, "y": 1}
-  },
-  "actions": [
-    {
-      "id": "run", "revision": 1, "loop": true,
-      "fps": 12,
-      "transform": {
-        "offset": {"x": 0, "y": 0},
-        "scale": {"x": 1, "y": 1}, "rotationDegrees": 0
-      },
-      "frames": [
-        {"id": "run-frame-000001", "revision": 0,
-         "imageUrl": "/preview/assets/run-frame-000001?r=0",
-         "sha256": "<64位小写十六进制内容摘要>"}
-      ],
-      "events": []
-    }
-  ]
-}
-```
-
-快照只含启用帧，帧顺序即播放顺序；`imageUrl`是本机只读端点，不是磁盘绝对路径。端点需校验连接令牌、文件归属和SHA-256，不能允许任意路径读取。图片字节是清单中`current`优先、其次`mattingBase`的已保存PNG；源图不能伪装透明结果。快照中的`sha256`用于引擎缓存与更新判断，示意占位符不作为真实消息值。
-
-## 增量消息
-
-```json
-{
-  "type": "patch", "protocolVersion": 1, "messageId": "m-002",
-  "projectId": "raccoon-project", "baseRevision": 3, "nextRevision": 4,
-  "characterId": "raccoon", "actionId": "jump",
-  "change": {
-    "kind": "replace-action",
-    "action": "与快照中单个action同结构的完整动作对象"
-  }
-}
-```
-
-R3第一版只支持`replace-action`和`replace-character-baseline`两种语义补丁；它们替换对应子树，不做逐像素或JSON任意路径操作。项目仓库保存成功后才发补丁，`baseRevision`必须等于接收端当前修订，`nextRevision`必须等于已保存项目修订。连续保存可合并成新完整快照，但不能跳过修订后仍假装补丁连续。
-
-接收端确认：`{"type":"ack","messageId":"m-002","appliedRevision":4}`。重复`messageId`且内容摘要相同应幂等确认，不重复应用；相同ID不同内容返回`MESSAGE_CONFLICT`。引擎端可以回报`{"type":"select-action","actionId":"jump"}`只影响预览播放选择，不写回项目。项目端可以发送`play`/`pause`/`seek-frame`预览控制，它们不改变项目修订。
-
-## 状态与错误
+## 会话生命周期
 
 ```text
-未连接 → 连接中 → 已连接 → 等待快照确认 → 已同步
-             └→ 连接失败                  ├→ 发送补丁 → 等待确认 → 已同步
-                                           └→ 冲突/超时 → 重发完整快照
-已同步 → 断开 → 重连 → 重新握手 → 完整快照确认
+无会话 --浏览器创建--> 等待连接 --Godot鉴权连接--> 已连接/等待快照
+                                          └--状态更新--> 已同步
+已同步 --浏览器编辑态更新--> 等待确认 --Godot确认--> 已同步
+任意状态 --断开/到期/服务退出--> 无会话
 ```
 
-连接握手包含协议版本、客户端实例ID和短期本机令牌；版本不匹配直接`PROTOCOL_UNSUPPORTED`。收到旧修订或漏修订补丁返回`REVISION_CONFLICT`，发送端重新从已保存项目制作完整快照。图片不可读返回`ASSET_MISSING`，校验不一致返回`ASSET_HASH_MISMATCH`；这些都不能静默显示旧图片并报告成功。超时后状态为“未同步”，界面要显示当前已确认修订和待发送修订。
+1. 浏览器向 `POST /api/character-projects/{projectId}/preview-sessions` 创建会话。服务检查项目存在且角色有共享画布、原点和基准动作；返回随机 `sessionId`、一次性显示的随机令牌和 WebSocket 地址。
+2. 浏览器以 `Authorization: Bearer <token>` 调用 `PUT /api/preview-sessions/{sessionId}/snapshot` 发布当前编辑态。项目数据须通过严格运行时模型校验，且角色、动作、帧及帧资产路径必须与磁盘项目相符；只允许同步空间参数、播放状态与选中项等预览态差异。
+3. Godot 用 `WebSocketPeer.handshake_headers` 携带令牌连接；服务器只允许一个 Godot 客户端占用一个会话，并推送最新快照/状态更新。
+4. Godot 使用 `HTTPRequest` 请求会话内的 `/frames/{frameId}`，令牌必须匹配，帧必须属于该项目；服务端仅返回清单当前帧资产（`current` 优先，其次 `mattingBase`，再其次 `source`）。
+5. 会话令牌只在内存中保存摘要；令牌不放在 URL、日志或快照中。客户端不得用令牌访问其他项目、会话或任意路径。
 
-## 第一版验收序列
+## 消息与版本
 
-1. 保存`run`和`jump`两个动作的项目修订3，连接Godot，发送完整快照并收到修订3确认。
-2. 在工作区修改`jump`偏移并保存成修订4；发送`replace-action`补丁，Godot仍可切换`run`且`jump`位置更新。
-3. 模拟丢掉修订4确认后重连；重新握手、完整快照修订4确认，不重复应用旧补丁。
-4. 制造图片哈希不符，预览标为未同步并明确报错；正式导出不受预览连接状态影响。
+所有 WebSocket 消息为 UTF-8 JSON 对象，必须带 `protocolVersion: 2`、`messageId` 和非负 `revision`。v2快照增加播放模式、逐帧时长和事件列表；未知字段、未知消息类型、超限消息或不支持的协议版本均明确拒绝，不做旧协议静默降级。
 
-这属于R3的运行验收，不是R0完成项。R0只固定消息契约和失败语义。
+### 浏览器发布的预览快照
+
+```json
+{
+  "type": "snapshot",
+  "protocolVersion": 2,
+  "messageId": "随机消息标识",
+  "revision": 7,
+  "projectId": "hero-project",
+  "characterId": "hero",
+  "activeActionId": "run",
+  "activeFrameId": "run-000001",
+  "playing": false,
+  "character": {
+    "canvas": {"width": 512, "height": 512},
+    "origin": {"x": 256, "y": 460},
+    "scale": {"x": 1, "y": 1}
+  },
+  "actions": [{
+    "id": "run", "name": "跑步",
+    "playback": {"mode": "per-frame"}, "loop": true,
+    "transform": {
+      "offset": {"x": 0, "y": 0},
+      "scale": {"x": 1, "y": 1}, "rotationDegrees": 0
+    },
+    "frames": [
+      {"id": "run-000001", "revision": 0, "duration": {"numerator": 1, "denominator": 12}},
+      {"id": "run-000002", "revision": 0, "duration": {"numerator": 1, "denominator": 10}}
+    ],
+    "events": [{"id":"event-footstep","frameId":"run-000002","type":"footstep","parameters":{"foot":"left"}}]
+  }]
+}
+```
+
+固定帧率动作使用 `playback: {"mode":"constant-fps","fps":12}`；每帧的 `duration` 为 `null`。逐帧模式使用约分的有理数秒数，Godot 适配器以此推进本地播放。事件引用稳定 `frameId`，在进入该帧时记录；顺序、禁用帧和循环行为均使用核心角色资产协议语义。
+
+浏览器播放时以快照中的 `activeFrameId` 和 `playing` 为准，Godot镜像这些帧切换，不另起一套计时器，避免重复推进或重复触发事件。浏览器暂停后，Godot可使用本地播放按钮独立验证相同的时长和事件序列。Godot的事件栏仅展示触发类型，不执行游戏逻辑。
+
+### Godot 确认
+
+```json
+{"type":"ack","protocolVersion":2,"messageId":"随机消息标识","revision":7}
+```
+
+Godot 只在应用完整快照且当前帧图像成功加载后确认该 `revision`。旧修订会忽略；缺少帧、无法解码、尺寸不符或载入失败会返回具名错误并保持“未同步”，不得继续展示旧帧并伪报成功。重连时服务端立即补发当前最新完整快照，不依赖断线期间的增量队列。
+
+服务端只在 `messageId` 与当前完整快照匹配且修订仍为最新时更新已确认修订，并返回：
+
+```json
+{"type":"snapshot-acknowledged","protocolVersion":2,"messageId":"随机消息标识","revision":7}
+```
+
+Godot 收到匹配的服务端回执后才显示“已同步”；仅成功调用 `send_text()` 不代表服务端已确认。
+
+## 关键不变式
+
+- 预览接收端只读；仅浏览器经现有项目保存 API 改变持久状态。
+- 服务进程不把预览快照写入项目目录，也不改动用户的 Godot 工程目录。
+- 所有资产查找由服务端以已验证项目清单和帧 ID 完成；禁止路径拼接来自客户端的文件路径。
+- 同一会话只有一个已配对的 Godot 客户端；短期令牌只授权该会话。
+- 每次发布都以完整当前快照替换旧状态；修订单调递增，服务端确认消息标识和修订后返回回执，Godot 收到后才显示为已同步。
+- 浏览器刷新或 Godot 重启后允许重新连接；服务端进程重启后会话清空，需重新创建。
+- 尚未保存的新增/删除帧不进入预览；首版只预览已保存项目中存在的帧与编辑态变换。
+
+## 错误语义
+
+`PROJECT_NOT_READY`（缺少共享画布、原点或基准）、`SESSION_EXPIRED`、`TOKEN_INVALID`、`PROTOCOL_UNSUPPORTED`、`SNAPSHOT_INVALID`、`PROJECT_STRUCTURE_CHANGED`、`FRAME_NOT_FOUND`、`ASSET_MISSING`、`IMAGE_DECODE_FAILED`、`REVISION_STALE`、`CLIENT_ALREADY_CONNECTED`。任何错误都应显示具体未同步状态；不静默回退到旧帧或正式导出文件。
+
+## R4 验收流程
+
+1. 建立含 `run` 与 `jump` 的已保存角色项目，创建本机预览会话。
+2. 启动最小 Godot 预览工程，使用一次性令牌连接；确认画布、原点、逐帧时长、当前帧和事件记录正确。
+3. 在浏览器切换 `run/jump`、播放/暂停、调整动作缩放/偏移；Godot镜像浏览器帧与事件，浏览器播放时不自行重复计时。
+4. 重启 Godot 客户端后重新连接，收到完整最新快照并恢复预览；旧令牌/过期会话拒绝。
+5. 核对预览开始前后项目清单及用户工程目录未被桥接流程写入；完整跑浏览器既有回归。
+
+## 官方接口依据
+
+- Godot `WebSocketPeer`：原生客户端可用握手头、`connect_to_url()`、轮询、文本消息，适合本机编辑状态订阅。
+- Godot `HTTPRequest`：异步请求 PNG；示例用 `Image.load_png_from_buffer()` 与 `ImageTexture.create_from_image()` 创建运行时纹理。
+- Godot 的 WebSocket 是消息协议，不适合高速实时联网；本功能只传低频编辑状态与帧切换。
+
+具体源码证据和当前核对日期见[Godot 预览桥源码证据索引](reference-godot-preview.md)。

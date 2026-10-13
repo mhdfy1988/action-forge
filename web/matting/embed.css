@@ -9,4 +9,30 @@ body{min-height:100dvh;overflow:hidden}
 .edit-toolbar{margin:0;gap:4px;padding:5px;border-radius:7px;flex-wrap:wrap}
 .workspace-footer{min-height:30px;padding:0 4px}
 .tool-settings{gap:5px}
+/* 嵌入编辑器沿用工作流深灰与冰蓝，不改变独立单图应用主题。 */
+:root{color-scheme:dark;--accent:#86cfff;color:#e8e8e8;background:#171717}
+body,.app-shell,.workspace{background:#171717;color:#e8e8e8}
+.comparison{border-color:#333;background:#111;border-radius:5px}
+.source-pane{background:#111;border-color:#333}
+.result-pane,.swatch.checker{background:#202020 repeating-conic-gradient(#292929 0 25%,#202020 0 50%) 0/20px 20px}
+.result-pane[data-background=dark],.swatch.dark{background:#0b0b0b}
+.result-pane[data-background=white],.swatch.white{background:#e5e5e5}
+.pane-label{background:#242424e8;color:#ccc;font-weight:500}.result-label{background:#203b4b;color:#a5dfff}
+.edit-toolbar{background:#202020;border-color:#333;border-radius:5px}
+.edit-toolbar button{color:#ccc;border-radius:4px}
+.edit-toolbar button:hover:not(:disabled),.zoom-controls button:hover:not(:disabled){background:#303030;color:#fff}
+.edit-toolbar button[aria-pressed=true]{background:#263f4e;color:var(--accent)}
+.tool-settings,.history-group{border-color:#393939}.tool-settings label{color:#aaa}
+.tool-settings input[type=range],.tool-settings input[type=checkbox]{accent-color:var(--accent)}
+.tool-settings input[type=number]{background:#292929;border-color:#3a3a3a;color:#eee}
+.setting-note,.history-group output,.workspace-footer{color:#999}
+.selection-actions{background:#20313a;color:var(--accent)}
+.selection-actions .selection-button,.quiet-button{background:#262626;border:1px solid #393939;color:#ddd}
+.quiet-button:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}
+.zoom-controls{background:#202020;border-color:#3a3a3a;box-shadow:none;backdrop-filter:none;border-radius:5px}
+.zoom-controls button,.zoom-controls output{color:#ddd}.zoom-controls .zoom-divider{background:#3a3a3a}
+.swatch{border-color:#555}.swatch.selected{outline-color:var(--accent)}
+.working{background:#171717e8;color:var(--accent)}.spinner{border-color:#344955;border-top-color:var(--accent)}
+button:focus-visible,input:focus-visible,.comparison.dragging{outline-color:var(--accent)}
+.workspace-footer p.error{color:#e09a9a}
 @media(max-width:700px){.workspace{padding:6px;gap:5px}.comparison{grid-template-columns:1fr 1fr}.pane{min-height:0}.pane-label{font-size:9px}}

@@ -39,6 +39,7 @@ def test_create_restart_load_and_independent_action_revisions(tmp_path):
     repository = ProjectRepository(root)
     created = repository.create(CharacterProject.model_validate(project_data()))
     assert created.revision == 0
+    assert created.formatVersion == 2
     assert [item.revision for item in created.characters[0].actions] == [0, 0]
 
     # 模拟服务重启：新仓库实例必须只靠磁盘恢复。
@@ -65,6 +66,37 @@ def test_noop_save_and_stale_revision_do_not_write(tmp_path):
     repository.save(created.id, 0, draft)
     with pytest.raises(DomainError, match="修订冲突"):
         repository.save(created.id, 0, draft)
+
+
+def test_delete_imported_action_removes_its_migration_and_project_delete_checks_revision(tmp_path):
+    repository = ProjectRepository(tmp_path / "projects")
+    data = project_data()
+    data["migrations"] = [{
+        "sourceFormatVersion": 4,
+        "sourceSequenceId": "jump-source",
+        "sourceSha256": "a" * 64,
+        "actionId": "jump",
+    }]
+    created = repository.create(CharacterProject.model_validate(data))
+
+    invalid = created.model_copy(deep=True)
+    invalid.migrations = []
+    with pytest.raises(DomainError, match="迁移凭据不能修改或删除"):
+        repository.save(created.id, 0, invalid)
+
+    draft = created.model_copy(deep=True)
+    draft.characters[0].actions = [draft.characters[0].actions[0]]
+    draft.migrations = []
+    saved = repository.save(created.id, 0, draft)
+    assert [item.id for item in saved.characters[0].actions] == ["run"]
+    assert saved.migrations == []
+
+    with pytest.raises(DomainError, match="修订冲突"):
+        repository.delete(created.id, 0)
+    repository.delete(created.id, saved.revision)
+    assert not (repository.root / created.id).exists()
+    with pytest.raises(DomainError, match="不存在"):
+        repository.load(created.id)
 
 
 def test_replace_failure_keeps_old_manifest(tmp_path, monkeypatch):
@@ -114,3 +146,26 @@ def test_create_missing_asset_is_explicit_and_leaves_no_project(tmp_path):
     with pytest.raises(DomainError, match="素材缺失"):
         repository.create(CharacterProject.model_validate(data))
     assert not (repository.root / "hero-project").exists()
+
+
+def test_loading_v1_upgrades_without_rewriting_until_explicit_save(tmp_path):
+    root = tmp_path / "projects"
+    repository = ProjectRepository(root)
+    directory = root / "hero-project"
+    directory.mkdir()
+    legacy = project_data()
+    (directory / "project.json").write_text(json.dumps(legacy), encoding="utf-8")
+    original = (directory / "project.json").read_bytes()
+
+    loaded = repository.load("hero-project", inspect_assets=False)
+    assert loaded.formatVersion == 2
+    assert loaded.characters[0].actions[0].playback.mode == "constant-fps"
+    assert all(frame.duration is None for frame in loaded.characters[0].actions[0].frames)
+    assert (directory / "project.json").read_bytes() == original
+
+    draft = loaded.model_copy(deep=True)
+    draft.name = "v2保存后的项目"
+    saved = repository.save(loaded.id, loaded.revision, draft)
+    stored = json.loads((directory / "project.json").read_text(encoding="utf-8"))
+    assert saved.formatVersion == stored["formatVersion"] == 2
+    assert all(frame["duration"] is None for frame in stored["characters"][0]["actions"][0]["frames"])

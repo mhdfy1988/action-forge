@@ -5,12 +5,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:motion-lab": "node scripts/build-motion-lab.mjs",
+    "build:fullbody-trial": "node scripts/build-fullbody-trial.mjs",
+    "prepare:motion-demo": "node scripts/prepare-motion-demo.mjs",
+    "motion:lab": "node scripts/serve-motion-lab.mjs",
     "build:icons": "node scripts/build-icons.mjs",
+    "generate:character-validator": "node integrations/javascript/generate-validator.mjs",
     "test": "node --test tests/web/*.test.mjs",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "lucide-static": "1.52.0"
+    "ajv": "8.20.0",
+    "closed-chain-ik": "https://codeload.github.com/gkjohnson/closed-chain-ik-js/tar.gz/1132da3dc3ac774426e9af503e4915bc04ca413b",
+    "esbuild": "0.25.12",
+    "lucide-static": "1.52.0",
+    "three": "0.186.1"
   }
 }

@@ -1,0 +1,17 @@
+.project-navigation{display:flex;align-items:center;gap:8px;min-width:0}
+.switcher{display:flex;align-items:center;gap:9px;max-width:240px;height:38px;padding:0 11px;border:0;border-radius:7px;background:none;color:#dedede;cursor:pointer;font-size:14px}
+.switcher:hover,.switcher[aria-expanded=true]{background:#292929}
+.switcher>span:not([data-icon]){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.switcher [data-icon]{display:flex;color:#929292;flex-shrink:0}.switcher svg{width:16px;height:16px}
+.navigation-separator{color:#535353}.library-save-state{margin-left:20px;font-size:11px;color:#909090;white-space:nowrap}.library-save-state.is-saving{color:#c3b48f}
+.navigation-panel{position:fixed;z-index:80;top:58px;width:310px;max-width:calc(100vw - 24px);padding:8px;background:#232323;border:1px solid #393939;border-radius:12px;box-shadow:0 18px 52px #0007;font-size:13px}
+.navigation-panel[hidden]{display:none}.navigation-panel button{font:inherit;cursor:pointer;color:inherit}.navigation-panel button:hover{background:#ffffff0a}
+.navigation-panel-head{display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 10px;font-size:12px;color:#aaa}.navigation-panel-head small{margin-left:6px;color:#777}
+.navigation-list{max-height:min(350px,calc(100dvh - 220px));overflow:auto}.navigation-row{display:flex;align-items:center;min-height:45px;padding:0 8px;border-radius:7px}.navigation-row:hover,.navigation-row.is-active{background:#ffffff0a}
+.navigation-select{display:flex;align-items:center;gap:10px;flex:1;min-width:0;height:45px;border:0;background:none;text-align:left;padding:0 4px}.navigation-select .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigation-select svg{width:16px;height:16px;color:#999;flex-shrink:0}.navigation-select .check{margin-left:auto;display:flex}
+.navigation-more{opacity:0}.navigation-row:hover .navigation-more,.navigation-more:focus-visible{opacity:1}
+.navigation-menu button{display:block;width:100%;padding:10px;border:0;border-radius:6px;background:none;text-align:left}
+.navigation-panel .navigation-danger{color:#d18a8a}.navigation-search{display:flex;gap:8px;align-items:center;margin:3px 5px 9px;padding:8px 10px;background:#191919;border:1px solid #363636;border-radius:7px;color:#777}.navigation-search svg{width:16px;height:16px}.navigation-search input{width:100%;min-width:0;border:0;background:none;color:#ddd;outline:none;font-size:12px}.navigation-menu{width:168px}.navigation-empty{padding:20px;text-align:center;color:#999}
+#libraryName{width:100%;padding:10px 12px;border:1px solid #555;border-radius:7px;background:#191919;color:#eee;font:inherit}#libraryError{color:#d18a8a}
+.switcher:focus-visible,.navigation-panel button:focus-visible{outline:1px solid #aaa;outline-offset:1px}
+@media(max-width:950px){.workflow-topbar .workflow-brand{width:auto;margin-right:20px}.library-save-state{display:none}.switcher{max-width:180px}}@media(max-width:600px){.workflow-topbar{padding:0 10px}.workflow-brand>span:last-child{display:none}.workflow-topbar .workflow-brand{margin-right:6px}.switcher{max-width:130px;font-size:12px;padding:0 6px}.project-navigation{gap:3px}.workflow-top-actions .quiet-button{padding:0 8px;font-size:12px}}

@@ -1,0 +1,729 @@
+{
+  "formatVersion": 1,
+  "assetTypes": [
+    "reference-image",
+    "action-video",
+    "frame-set/source",
+    "frame-set/transparent",
+    "action-clip",
+    "character-asset",
+    "engine-package"
+  ],
+  "executionModes": [
+    "source",
+    "automatic",
+    "interactive",
+    "external"
+  ],
+  "nodes": [
+    {
+      "type": "reference-image",
+      "title": "角色参考图",
+      "version": 1,
+      "executionMode": "source",
+      "target": false,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "image",
+          "assetTypes": [
+            "reference-image"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          }
+        },
+        "title": "NamedSourceParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "action-video",
+      "title": "动作视频",
+      "version": 1,
+      "executionMode": "source",
+      "target": false,
+      "inputs": [
+        {
+          "name": "reference",
+          "assetTypes": [
+            "reference-image"
+          ],
+          "required": false,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "assetTypes": [
+            "action-video"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Prompt"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Direction"
+          },
+          "durationSeconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 60,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Durationseconds"
+          },
+          "providerNote": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Providernote"
+          }
+        },
+        "title": "ActionVideoParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "process-frames",
+      "title": "序列帧处理",
+      "version": 1,
+      "executionMode": "interactive",
+      "target": false,
+      "inputs": [
+        {
+          "name": "source",
+          "assetTypes": [
+            "action-video",
+            "frame-set/source",
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/source",
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "startSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Startseconds"
+          },
+          "endSeconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Endseconds"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fps"
+          }
+        },
+        "title": "ExtractFramesParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "extract-frames",
+      "title": "提取序列帧",
+      "version": 1,
+      "executionMode": "automatic",
+      "target": false,
+      "inputs": [
+        {
+          "name": "video",
+          "assetTypes": [
+            "action-video"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/source"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [
+        "startSeconds",
+        "endSeconds",
+        "fps"
+      ],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "startSeconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Startseconds"
+          },
+          "endSeconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Endseconds"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fps"
+          }
+        },
+        "title": "ExtractFramesParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "organize-frames",
+      "title": "整理序列帧",
+      "version": 1,
+      "executionMode": "interactive",
+      "target": false,
+      "inputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/source",
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/source",
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "passthroughInput": "frames"
+        }
+      ],
+      "requiredParameters": [],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "previewFps": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Previewfps"
+          },
+          "loopStart": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Loopstart"
+          },
+          "loopEndExclusive": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Loopendexclusive"
+          }
+        },
+        "title": "OrganizeFramesParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "remove-background",
+      "title": "移除背景",
+      "version": 1,
+      "executionMode": "automatic",
+      "target": false,
+      "inputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/source"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "pipeline": {
+            "const": "model-ffmpeg",
+            "default": "model-ffmpeg",
+            "title": "Pipeline",
+            "type": "string"
+          },
+          "despillStrength": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Despillstrength"
+          }
+        },
+        "title": "RemoveBackgroundParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "build-action-clip",
+      "title": "制作动作片段",
+      "version": 1,
+      "executionMode": "interactive",
+      "target": false,
+      "inputs": [
+        {
+          "name": "frames",
+          "assetTypes": [
+            "frame-set/transparent"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clip",
+          "assetTypes": [
+            "action-clip"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [
+        "name",
+        "loop",
+        "fps"
+      ],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "loop": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Loop"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "maximum": 60,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fps"
+          }
+        },
+        "title": "ActionClipParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "assemble-character",
+      "title": "组装角色资产",
+      "version": 1,
+      "executionMode": "interactive",
+      "target": false,
+      "inputs": [
+        {
+          "name": "reference",
+          "assetTypes": [
+            "reference-image"
+          ],
+          "required": false,
+          "maxConnections": 1
+        },
+        {
+          "name": "clips",
+          "assetTypes": [
+            "action-clip"
+          ],
+          "required": true,
+          "maxConnections": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "character",
+          "assetTypes": [
+            "character-asset"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [
+        "characterName"
+      ],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "characterName": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Charactername"
+          },
+          "defaultAction": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Defaultaction"
+          }
+        },
+        "title": "CharacterAssemblyParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "game-preview",
+      "title": "游戏预览",
+      "version": 1,
+      "executionMode": "interactive",
+      "target": true,
+      "inputs": [
+        {
+          "name": "character",
+          "assetTypes": [
+            "character-asset"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [],
+      "requiredParameters": [
+        "target"
+      ],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "target": {
+            "anyOf": [
+              {
+                "enum": [
+                  "godot",
+                  "javascript"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target"
+          }
+        },
+        "title": "PreviewParameters",
+        "type": "object"
+      }
+    },
+    {
+      "type": "export-game-assets",
+      "title": "导出游戏资产",
+      "version": 1,
+      "executionMode": "automatic",
+      "target": true,
+      "inputs": [
+        {
+          "name": "character",
+          "assetTypes": [
+            "character-asset"
+          ],
+          "required": true,
+          "maxConnections": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "package",
+          "assetTypes": [
+            "engine-package"
+          ],
+          "required": true,
+          "passthroughInput": null
+        }
+      ],
+      "requiredParameters": [
+        "format"
+      ],
+      "parameterSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "format": {
+            "anyOf": [
+              {
+                "enum": [
+                  "png-sequence",
+                  "sprite-sheet"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Format"
+          },
+          "frameWidth": {
+            "anyOf": [
+              {
+                "maximum": 8192,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Framewidth"
+          },
+          "frameHeight": {
+            "anyOf": [
+              {
+                "maximum": 8192,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Frameheight"
+          }
+        },
+        "title": "ExportParameters",
+        "type": "object"
+      }
+    }
+  ]
+}

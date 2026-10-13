@@ -1,0 +1,145 @@
+{
+  "formatVersion": 1,
+  "kind": "action-forge-workflow",
+  "id": "raccoon-run-workflow",
+  "name": "浣熊跑步动作",
+  "revision": 0,
+  "viewport": {
+    "x": 120.0,
+    "y": 80.0,
+    "zoom": 1.0
+  },
+  "nodes": [
+    {
+      "id": "process-run-frames",
+      "name": "跑步序列帧处理",
+      "type": "process-frames",
+      "definitionVersion": 1,
+      "position": { "x": 680.0, "y": 520.0 },
+      "collapsed": false,
+      "parameters": { "startSeconds": 0.0, "endSeconds": 4.0, "fps": 12 }
+    },
+    {
+      "id": "reference",
+      "name": "角色参考图 1",
+      "type": "reference-image",
+      "definitionVersion": 1,
+      "position": { "x": 80.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": { "label": "角色正侧面参考图" }
+    },
+    {
+      "id": "generate-run-video",
+      "name": "跑步·右",
+      "type": "action-video",
+      "definitionVersion": 1,
+      "position": { "x": 360.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "prompt": "角色保持外观一致，完成向右跑步循环",
+        "direction": "right",
+        "durationSeconds": 4.0,
+        "providerNote": "第一版由外部视频工具完成后导入结果"
+      }
+    },
+    {
+      "id": "extract-run-frames",
+      "name": "跑步抽帧",
+      "type": "extract-frames",
+      "definitionVersion": 1,
+      "position": { "x": 680.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "startSeconds": 0.0,
+        "endSeconds": 4.0,
+        "fps": 12
+      }
+    },
+    {
+      "id": "organize-run-frames",
+      "name": "跑步帧整理",
+      "type": "organize-frames",
+      "definitionVersion": 1,
+      "position": { "x": 980.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "previewFps": 12,
+        "loopStart": 0,
+        "loopEndExclusive": 12
+      }
+    },
+    {
+      "id": "remove-run-background",
+      "name": "跑步抠图",
+      "type": "remove-background",
+      "definitionVersion": 1,
+      "position": { "x": 1280.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "pipeline": "model-ffmpeg",
+        "despillStrength": 0.35
+      }
+    },
+    {
+      "id": "build-run-clip",
+      "name": "跑步动作",
+      "type": "build-action-clip",
+      "definitionVersion": 1,
+      "position": { "x": 1580.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "name": "run",
+        "loop": true,
+        "fps": 12
+      }
+    },
+    {
+      "id": "assemble-character",
+      "name": "浣熊角色",
+      "type": "assemble-character",
+      "definitionVersion": 1,
+      "position": { "x": 1880.0, "y": 120.0 },
+      "collapsed": false,
+      "parameters": {
+        "characterName": "raccoon",
+        "defaultAction": "run"
+      }
+    },
+    {
+      "id": "preview-character",
+      "name": "游戏预览 1",
+      "type": "game-preview",
+      "definitionVersion": 1,
+      "position": { "x": 2180.0, "y": 40.0 },
+      "collapsed": false,
+      "parameters": { "target": "godot" }
+    },
+    {
+      "id": "export-character",
+      "name": "导出游戏资产 1",
+      "type": "export-game-assets",
+      "definitionVersion": 1,
+      "position": { "x": 2180.0, "y": 220.0 },
+      "collapsed": false,
+      "parameters": {
+        "format": "sprite-sheet",
+        "frameWidth": 512,
+        "frameHeight": 512
+      }
+    }
+  ],
+  "connections": [
+    { "id": "c10", "fromNode": "generate-run-video", "fromPort": "video", "toNode": "process-run-frames", "toPort": "source" },
+    { "id": "c01", "fromNode": "reference", "fromPort": "image", "toNode": "generate-run-video", "toPort": "reference" },
+    { "id": "c02", "fromNode": "generate-run-video", "fromPort": "video", "toNode": "extract-run-frames", "toPort": "video" },
+    { "id": "c03", "fromNode": "extract-run-frames", "fromPort": "frames", "toNode": "organize-run-frames", "toPort": "frames" },
+    { "id": "c04", "fromNode": "organize-run-frames", "fromPort": "frames", "toNode": "remove-run-background", "toPort": "frames" },
+    { "id": "c05", "fromNode": "remove-run-background", "fromPort": "frames", "toNode": "build-run-clip", "toPort": "frames" },
+    { "id": "c06", "fromNode": "build-run-clip", "fromPort": "clip", "toNode": "assemble-character", "toPort": "clips" },
+    { "id": "c07", "fromNode": "reference", "fromPort": "image", "toNode": "assemble-character", "toPort": "reference" },
+    { "id": "c08", "fromNode": "assemble-character", "fromPort": "character", "toNode": "preview-character", "toPort": "character" },
+    { "id": "c09", "fromNode": "assemble-character", "fromPort": "character", "toNode": "export-character", "toPort": "character" }
+  ],
+  "assets": [],
+  "results": []
+}

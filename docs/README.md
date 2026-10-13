@@ -2,9 +2,20 @@
 
 ## 当前说明
 
+- [2026-10-13源码提交收口与验证边界](submission-2026-10-13.md)
+
+- [右键自动执行：预设、分支与恢复边界](references/workflow-auto-implementation.md)
+
 - [项目方向与计划](project-plan.md)
 - [角色动作资产工作台方向](character-asset-workspace.md)
-- [角色资产协议v1草案](character-asset-protocol.md)
+- [工作流画布与节点模型](workflow-canvas-node-model.md)
+- [序列帧处理合并工作台：当前入口、状态与验证](references/workflow-sequence-implementation.md)
+- [R6可操作工作流画布计划](stages/character-workspace-r6-canvas-plan.md)
+- [工作流抽帧实现、复用证据与验收边界](references/workflow-extraction-implementation.md)
+- [工作流整理实现、草稿与确认边界](references/workflow-organizer-implementation.md)
+- [透明背景：旧版功能核对、精修恢复与验证](references/workflow-matting-implementation.md)
+- [ComfyUI节点画布证据索引](references/comfyui-node-canvas-evidence.md)
+- [角色资产协议v2与v1迁移](character-asset-protocol.md)
 - [项目保存与恢复](character-project-storage.md)、[旧结果迁移](legacy-action-migration.md)、[引擎预览协议](engine-preview-protocol.md)
 - [R0角色工作区准备计划](stages/character-workspace-r0-plan.md)
 - [R0准入门禁](stages/character-workspace-r0-gate.md)

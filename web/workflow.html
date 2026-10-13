@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>动作工坊 · 工作流画布</title>
+  <link rel="stylesheet" href="/assets/workflow.css">
+  <link rel="stylesheet" href="/assets/workflow-navigation.css">
+  <link rel="stylesheet" href="/assets/workflow-extract-workbench.css">
+  <link rel="stylesheet" href="/assets/workflow-organize-workbench.css">
+  <link rel="stylesheet" href="/assets/workflow-matting-workbench.css">
+</head>
+<body>
+<div class="workflow-app">
+  <header class="workflow-topbar">
+    <a class="workflow-brand" href="/" aria-label="返回动作工坊旧入口"><span data-icon="layers"></span><span><strong>动作工坊</strong><small>工作流画布</small></span></a>
+    <div class="project-navigation">
+      <button id="projectButton" class="switcher" aria-expanded="false" aria-controls="projectPanel"><span data-icon="folder"></span><span id="projectLabel">未命名工程</span><span data-icon="chevron-down"></span></button>
+      <span class="navigation-separator">/</span>
+      <button id="flowButton" class="switcher" aria-expanded="false" aria-controls="flowPanel"><span id="flowLabel">未命名工作流</span><span data-icon="chevron-down"></span></button>
+    </div>
+    <span id="saveState" class="library-save-state">本机草稿已保存</span>
+  </header>
+
+  <section id="projectPanel" class="navigation-panel" aria-label="工程" hidden>
+    <div class="navigation-panel-head"><span>工程</span><button id="newProject" class="icon-plain" aria-label="新建工程" data-icon="plus"></button></div>
+    <div id="projectList" class="navigation-list"></div>
+  </section>
+  <section id="flowPanel" class="navigation-panel" aria-label="工作流" hidden>
+    <div class="navigation-panel-head"><span>工作流 <small id="flowCount"></small></span><button id="newFlow" class="icon-plain" aria-label="新建工作流" data-icon="plus"></button></div>
+    <label class="navigation-search"><span data-icon="search"></span><input id="flowSearch" placeholder="搜索工作流" aria-label="搜索工作流"></label>
+    <div id="flowList" class="navigation-list"></div>
+  </section>
+  <div id="flowMenu" class="navigation-panel navigation-menu" role="menu" aria-label="工作流操作" hidden><button role="menuitem" data-action="rename">重命名</button><button role="menuitem" data-action="copy">复制工作流</button><button role="menuitem" data-action="delete" class="navigation-danger">删除工作流</button></div>
+  <div id="projectMenu" class="navigation-panel navigation-menu" role="menu" aria-label="工程操作" hidden><button role="menuitem" data-action="renameProject">重命名</button><button role="menuitem" data-action="deleteProject" class="navigation-danger">删除工程</button></div>
+  <dialog id="libraryDialog" class="workflow-dialog" aria-labelledby="libraryDialogTitle"><form method="dialog"><header class="workflow-dialog-head"><h2 id="libraryDialogTitle"></h2><button class="icon-plain" value="cancel" formnovalidate aria-label="关闭工程操作" data-icon="x"></button></header><p id="libraryDialogMessage" hidden></p><input id="libraryName" aria-label="名称" maxlength="80"><p id="libraryError" role="alert" hidden></p><footer class="workflow-dialog-actions"><button class="quiet-button" value="cancel" formnovalidate>取消</button><button id="libraryConfirm" class="quiet-button" value="confirm">确定</button></footer></form></dialog>
+
+  <nav id="nodeToolbar" class="canvas-tools" aria-label="添加节点"></nav>
+
+  <main id="canvasViewport" class="canvas-viewport" tabindex="0" aria-label="工作流画布">
+    <div id="canvasGrid" class="canvas-grid"></div>
+    <div id="canvasWorld" class="canvas-world">
+      <svg id="connectionLayer" class="connection-layer" aria-label="节点连接"></svg>
+      <div id="nodeLayer" class="node-layer"></div>
+      <svg id="draftConnection" class="draft-connection" aria-hidden="true"><path></path></svg>
+    </div>
+    <section id="emptyState" class="canvas-empty">
+      <h1>从一个素材节点开始</h1>
+      <p>从左侧添加参考图或动作视频</p>
+    </section>
+    <div class="zoom-cluster"><button id="zoomOut" aria-label="缩小">−</button><span id="zoomLabel" aria-label="当前缩放比例">100%</span><button id="zoomFit" aria-label="适合全部节点">适合</button><button id="zoomIn" aria-label="放大">＋</button></div>
+  </main>
+
+  <aside id="inspector" class="workflow-inspector">
+    <div id="inspectorEmpty" class="inspector-empty"><span data-icon="layout-grid"></span><h2>选择节点或连线</h2><p>选中后查看参数与连接</p></div>
+    <div id="nodeInspector" hidden>
+      <header class="inspector-head"><div><h2 id="inspectTitle"></h2><span id="inspectType" class="inspector-type"></span><span id="inspectStatus" class="inspector-status">尚未执行</span></div><button id="closeInspector" class="icon-plain" data-icon="x" aria-label="关闭检查器"></button></header>
+      <p id="inspectNotice" class="inspector-notice" hidden></p>
+      <section id="referenceImageSection" class="inspector-section" hidden></section>
+      <section id="nodeSettings" class="inspector-section" hidden><div id="parameterFields" class="parameter-fields"></div></section>
+      <section id="nodeWorkbenchActions" class="node-workbench-actions" hidden></section>
+    </div>
+    <div id="connectionInspector" hidden>
+      <header class="inspector-head"><div><h2>资产连接</h2></div><button id="closeConnectionInspector" class="icon-plain" data-icon="x" aria-label="关闭检查器"></button></header>
+      <section class="inspector-section"><h3>连接关系</h3><div id="connectionSummary" class="connection-summary"></div></section>
+    </div>
+  </aside>
+
+  <div id="canvasContextMenu" class="canvas-context-menu" role="menu" aria-label="画布操作" hidden>
+    <button type="button" role="menuitem" data-action="auto-run" hidden><span data-icon="play"></span><span>自动执行</span></button>
+    <button type="button" role="menuitem" data-action="add" hidden><span data-icon="plus"></span><span>添加节点</span><span class="context-next">›</span></button>
+    <button type="button" role="menuitem" data-action="duplicate"><span data-icon="layers"></span><span>复制节点</span><kbd>Ctrl+D</kbd></button>
+    <button type="button" role="menuitem" data-action="delete" class="context-danger"><span data-icon="trash-2"></span><span id="contextDeleteLabel">删除节点</span><kbd>Del</kbd></button>
+    <div id="contextNodeCatalog" hidden></div>
+    <div id="contextResetSeparator" class="context-separator" role="separator" hidden></div>
+    <button id="resetProject" type="button" role="menuitem" data-action="reset" class="context-danger" hidden><span data-icon="trash-2"></span><span>清空当前画布</span></button>
+  </div>
+  <div id="toast" class="workflow-toast" role="status" aria-live="polite"></div>
+  <dialog id="adoptVideoDialog" class="workflow-dialog" aria-labelledby="adoptVideoTitle"><form method="dialog"><header class="workflow-dialog-head"><h2 id="adoptVideoTitle">采用当前视频？</h2><button class="icon-plain" value="cancel" formnovalidate data-icon="x" aria-label="关闭采用确认"></button></header><p>请确认当前视频仍符合新的参考图和生成备注。采用后不会自动运行下游。</p><footer class="workflow-dialog-actions"><button class="quiet-button" value="cancel" autofocus>取消</button><button class="quiet-button" value="confirm">确认采用</button></footer></form></dialog>
+  <dialog id="imageViewer" class="workflow-dialog image-viewer" aria-label="查看参考图"><form method="dialog"><header class="workflow-dialog-head"><h2>参考图</h2><button class="icon-plain" data-icon="x" aria-label="关闭图片"></button></header><img id="imageViewerImage" alt="角色参考图"></form></dialog>
+  <dialog id="resetDialog" class="workflow-dialog" aria-labelledby="resetDialogTitle" aria-describedby="resetDialogDescription">
+    <form method="dialog">
+      <header class="workflow-dialog-head">
+        <h2 id="resetDialogTitle">清空当前画布？</h2>
+        <button class="icon-plain" value="cancel" formnovalidate data-icon="x" aria-label="关闭清空确认"></button>
+      </header>
+      <p id="resetDialogDescription">当前画布的节点和连线将被移除，此操作无法撤销。</p>
+      <footer class="workflow-dialog-actions">
+        <button id="cancelReset" class="quiet-button" value="cancel" formnovalidate autofocus>取消</button>
+        <button id="confirmReset" class="danger-button" value="confirm">清空画布</button>
+      </footer>
+    </form>
+  </dialog>
+</div>
+<script type="module" src="/assets/workflow.js"></script>
+</body>
+</html>

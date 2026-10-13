@@ -1,8 +1,12 @@
 from fastapi.testclient import TestClient
 from pathlib import Path
 from types import SimpleNamespace
+import hashlib
+import io
+import json
 import threading
 import time
+import zipfile
 
 from PIL import Image
 
@@ -22,6 +26,7 @@ def test_project_page_create_two_actions_save_and_reopen(tmp_path):
         })
         assert created.status_code == 200, created.text
         project = created.json()
+        assert project["formatVersion"] == 2
         project["characters"][0]["actions"] = [
             action("run", "跑步", 12, True),
             action("jump", "跳跃", 8, False),
@@ -44,14 +49,33 @@ def test_project_page_create_two_actions_save_and_reopen(tmp_path):
             "characterCount": 1, "actionCount": 2, "status": "ready",
         }]
         reopened = client.get("/api/character-projects/hero-project").json()
+        assert reopened["formatVersion"] == 2
         assert [(item["id"], item["playback"]["fps"], item["loop"])
                 for item in reopened["characters"][0]["actions"]] == [
                     ("run", 12, True), ("jump", 8, False)
                 ]
 
 
-def test_completed_legacy_batch_migrates_through_api_and_serves_frame(tmp_path):
+def test_project_delete_requires_current_revision(tmp_path):
     with TestClient(create_app(tmp_path / "cache", projects=tmp_path / "projects")) as client:
+        created = client.post("/api/character-projects", json={
+            "id": "delete-me", "name": "待删除项目",
+            "characterId": "hero", "characterName": "英雄",
+        }).json()
+        stale = client.request("DELETE", "/api/character-projects/delete-me", json={
+            "expectedRevision": created["revision"] + 1,
+        })
+        assert stale.status_code == 400 and "修订冲突" in stale.json()["detail"]
+        deleted = client.request("DELETE", "/api/character-projects/delete-me", json={
+            "expectedRevision": created["revision"],
+        })
+        assert deleted.status_code == 200 and deleted.json()["id"] == "delete-me"
+        assert client.get("/api/character-projects/delete-me").status_code == 400
+
+
+def test_completed_legacy_batch_migrates_through_api_and_serves_frame(tmp_path):
+    projects_root = tmp_path / "projects"
+    with TestClient(create_app(tmp_path / "cache", projects=projects_root)) as client:
         token = "b" * 32
         frame_id = f"{'a' * 32}-000001"
         directory = tmp_path / "cache" / f"batch-{token}"
@@ -91,6 +115,90 @@ def test_completed_legacy_batch_migrates_through_api_and_serves_frame(tmp_path):
         assert project["characters"][0]["actions"][0]["frames"][0]["revision"] == 1
         frame = client.get(f"/api/character-projects/hero-project/frames/{frame_id}")
         assert frame.status_code == 200 and frame.headers["content-type"] == "image/png"
+
+        action = project["characters"][0]["actions"][0]
+        action["playback"] = {"mode": "per-frame"}
+        action["frames"][0]["duration"] = {"numerator": 1, "denominator": 12}
+        action["events"] = [{
+            "id": "event-footstep", "frameId": frame_id,
+            "type": "footstep", "parameters": {"foot": "left"},
+        }]
+        saved = client.put("/api/character-projects/hero-project", json={
+            "expectedRevision": 0, "project": project,
+        })
+        assert saved.status_code == 200, saved.text
+        assert saved.json()["characters"][0]["actions"][0]["events"][0]["frameId"] == frame_id
+        manifest_before = (projects_root / "hero-project" / "project.json").read_bytes()
+        exported = client.get("/api/character-projects/hero-project/export")
+        assert exported.status_code == 200
+        assert exported.headers["content-type"] == "application/zip"
+        exported_frame_assets = project["characters"][0]["actions"][0]["frames"][0]["assets"]
+        with zipfile.ZipFile(io.BytesIO(exported.content)) as archive:
+            assert archive.testzip() is None
+            expected_assets = {path for path in exported_frame_assets.values() if path}
+            assert set(archive.namelist()) == {"project.json", *expected_assets}
+            exported_project = json.loads(archive.read("project.json"))
+            exported_action = exported_project["characters"][0]["actions"][0]
+            assert exported_project["formatVersion"] == 2
+            assert exported_action["playback"] == {"mode": "per-frame"}
+            assert exported_action["frames"][0]["duration"] == {"numerator": 1, "denominator": 12}
+            assert exported_action["events"][0]["type"] == "footstep"
+        assert (projects_root / "hero-project" / "project.json").read_bytes() == manifest_before
+
+
+def test_character_calibration_saves_and_reopens_without_touching_source_frames(tmp_path):
+    projects_root = tmp_path / "projects"
+    app = create_app(tmp_path / "cache", projects=projects_root)
+    with TestClient(app) as client:
+        created = client.post("/api/character-projects", json={
+            "id": "calibration-project", "name": "校准验收",
+            "characterId": "hero", "characterName": "英雄",
+        })
+        assert created.status_code == 200, created.text
+        project = created.json()
+        character = project["characters"][0]
+        source_hashes = []
+        for action_id, name, frame_id in (("run", "跑步", "run-frame"),
+                                          ("jump", "跳跃", "jump-frame")):
+            relative = f"assets/characters/hero/actions/{action_id}/source/frame.png"
+            target = projects_root / "calibration-project" / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (64, 96), (80, 100, 120, 255)).save(target)
+            source_hashes.append(hashlib.sha256(target.read_bytes()).digest())
+            item = action(action_id, name, 12, action_id == "run")
+            item["frames"] = [{
+                "id": frame_id, "revision": 0, "enabled": True,
+                "assets": {"source": relative, "mattingBase": None, "current": None},
+                "source": {"sourceFrameId": None, "sourceFrameIndex": 0,
+                           "sourceTimeSeconds": None, "sourcePts": None},
+            }]
+            character["actions"].append(item)
+        character.update({"canvas": {"width": 128, "height": 128},
+                          "origin": {"x": 64, "y": 110},
+                          "baseline": {"actionId": "run", "frameId": "run-frame"}})
+        character["actions"][0]["anchor"] = {"frameId": "run-frame", "x": 0.5, "y": 0.9}
+        character["actions"][1]["anchor"] = {"frameId": "jump-frame", "x": 0.5, "y": 0.88}
+        character["actions"][1]["transform"]["scale"] = {"x": 1.15, "y": 1.15}
+        character["actions"][1]["transform"]["offset"] = {"x": 3, "y": -4}
+        saved = client.put("/api/character-projects/calibration-project", json={
+            "expectedRevision": 0, "project": project,
+        })
+        assert saved.status_code == 200, saved.text
+        assert [item["revision"] for item in saved.json()["characters"][0]["actions"]] == [0, 0]
+        assert [hashlib.sha256((projects_root / "calibration-project" / item).read_bytes()).digest()
+                for item in ("assets/characters/hero/actions/run/source/frame.png",
+                             "assets/characters/hero/actions/jump/source/frame.png")] == source_hashes
+
+    with TestClient(create_app(tmp_path / "cache-reopen", projects=projects_root)) as client:
+        restored = client.get("/api/character-projects/calibration-project").json()
+        character = restored["characters"][0]
+        assert character["canvas"] == {"width": 128, "height": 128}
+        assert character["origin"] == {"x": 64, "y": 110}
+        assert character["baseline"] == {"actionId": "run", "frameId": "run-frame"}
+        jump = character["actions"][1]
+        assert jump["anchor"] == {"frameId": "jump-frame", "x": 0.5, "y": 0.88}
+        assert jump["transform"]["scale"] == {"x": 1.15, "y": 1.15}
+        assert jump["transform"]["offset"] == {"x": 3, "y": -4}
 
 
 def test_v2_and_v3_source_migration_endpoints_keep_source_only(tmp_path):

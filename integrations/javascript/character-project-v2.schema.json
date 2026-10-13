@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://action-forge.local/schemas/character-project-v2.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formatVersion", "kind", "id", "name", "revision", "migrations", "characters"],
+  "properties": {
+    "formatVersion": { "const": 2 },
+    "kind": { "const": "action-forge-project" },
+    "id": { "$ref": "#/definitions/id" },
+    "name": { "$ref": "#/definitions/name" },
+    "revision": { "$ref": "#/definitions/revision" },
+    "migrations": { "type": "array", "items": { "$ref": "#/definitions/migration" } },
+    "characters": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/character" } }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "name": { "type": "string" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "path": { "type": "string" },
+    "nullablePath": { "anyOf": [{ "$ref": "#/definitions/path" }, { "type": "null" }] },
+    "rational": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": { "type": "integer" },
+        "denominator": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "size": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 8192 }
+      }
+    },
+    "nullableSize": { "anyOf": [{ "$ref": "#/definitions/size" }, { "type": "null" }] },
+    "point": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } }
+    },
+    "nullablePoint": { "anyOf": [{ "$ref": "#/definitions/point" }, { "type": "null" }] },
+    "scale": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": { "x": { "type": "number", "exclusiveMinimum": 0 }, "y": { "type": "number", "exclusiveMinimum": 0 } }
+    },
+    "frameDuration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": { "type": "integer", "minimum": 1 },
+        "denominator": { "type": "integer", "minimum": 1, "maximum": 1000000 }
+      }
+    },
+    "nullableFrameDuration": { "anyOf": [{ "$ref": "#/definitions/frameDuration" }, { "type": "null" }] },
+    "transform": {
+      "type": "object", "additionalProperties": false,
+      "required": ["offset", "scale", "rotationDegrees"],
+      "properties": {
+        "offset": { "$ref": "#/definitions/point" },
+        "scale": { "$ref": "#/definitions/scale" },
+        "rotationDegrees": { "type": "number" }
+      }
+    },
+    "anchor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["frameId", "x", "y"],
+      "properties": {
+        "frameId": { "$ref": "#/definitions/id" },
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "nullableAnchor": { "anyOf": [{ "$ref": "#/definitions/anchor" }, { "type": "null" }] },
+    "baseline": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actionId", "frameId"],
+      "properties": { "actionId": { "$ref": "#/definitions/id" }, "frameId": { "$ref": "#/definitions/id" } }
+    },
+    "nullableBaseline": { "anyOf": [{ "$ref": "#/definitions/baseline" }, { "type": "null" }] },
+    "extraction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["startSeconds", "endSeconds", "fps"],
+      "properties": {
+        "startSeconds": { "$ref": "#/definitions/rational" },
+        "endSeconds": { "$ref": "#/definitions/rational" },
+        "fps": { "type": "integer", "minimum": 1, "maximum": 60 }
+      }
+    },
+    "videoSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "video", "sequenceId", "extraction"],
+      "properties": {
+        "kind": { "const": "video-extraction" },
+        "video": { "$ref": "#/definitions/nullablePath" },
+        "sequenceId": { "$ref": "#/definitions/id" },
+        "extraction": { "$ref": "#/definitions/extraction" }
+      }
+    },
+    "imageSequenceSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "sequenceId", "declaredFps"],
+      "properties": {
+        "kind": { "const": "image-sequence" },
+        "sequenceId": { "$ref": "#/definitions/id" },
+        "declaredFps": { "type": "integer", "minimum": 1, "maximum": 60 }
+      }
+    },
+    "frameAssets": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "mattingBase", "current"],
+      "properties": {
+        "source": { "$ref": "#/definitions/path" },
+        "mattingBase": { "$ref": "#/definitions/nullablePath" },
+        "current": { "$ref": "#/definitions/nullablePath" }
+      }
+    },
+    "frameOrigin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceFrameId", "sourceFrameIndex", "sourceTimeSeconds", "sourcePts"],
+      "properties": {
+        "sourceFrameId": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+        "sourceFrameIndex": { "anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }] },
+        "sourceTimeSeconds": { "anyOf": [{ "$ref": "#/definitions/rational" }, { "type": "null" }] },
+        "sourcePts": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+        "sampleTimeSeconds": { "anyOf": [{ "$ref": "#/definitions/rational" }, { "type": "null" }] },
+        "sourceSampleDurationSeconds": { "anyOf": [{ "$ref": "#/definitions/rational" }, { "type": "null" }] }
+      }
+    },
+    "frame": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "revision", "enabled", "duration", "assets", "source"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "revision": { "$ref": "#/definitions/revision" },
+        "enabled": { "type": "boolean" },
+        "duration": { "$ref": "#/definitions/nullableFrameDuration" },
+        "assets": { "$ref": "#/definitions/frameAssets" },
+        "source": { "$ref": "#/definitions/frameOrigin" }
+      }
+    },
+    "jsonValue": {
+      "anyOf": [
+        { "type": "null" }, { "type": "boolean" }, { "type": "number" }, { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/definitions/jsonValue" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/definitions/jsonValue" } }
+      ]
+    },
+    "event": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "frameId", "type", "parameters"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "frameId": { "$ref": "#/definitions/id" },
+        "type": { "$ref": "#/definitions/id" },
+        "parameters": { "type": "object", "additionalProperties": { "$ref": "#/definitions/jsonValue" } }
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "revision", "loop", "playback", "transform", "anchor", "source", "frames", "events"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "$ref": "#/definitions/name" },
+        "revision": { "$ref": "#/definitions/revision" },
+        "loop": { "type": "boolean" },
+        "playback": {
+          "oneOf": [
+            { "type": "object", "additionalProperties": false, "required": ["mode", "fps"], "properties": { "mode": { "const": "constant-fps" }, "fps": { "type": "integer", "minimum": 1, "maximum": 60 } } },
+            { "type": "object", "additionalProperties": false, "required": ["mode"], "properties": { "mode": { "const": "per-frame" } } }
+          ]
+        },
+        "transform": { "$ref": "#/definitions/transform" },
+        "anchor": { "$ref": "#/definitions/nullableAnchor" },
+        "source": { "oneOf": [{ "$ref": "#/definitions/videoSource" }, { "$ref": "#/definitions/imageSequenceSource" }] },
+        "frames": { "type": "array", "items": { "$ref": "#/definitions/frame" } },
+        "events": { "type": "array", "items": { "$ref": "#/definitions/event" } }
+      }
+    },
+    "character": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "revision", "referenceImage", "canvas", "origin", "baseline", "scale", "actions"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "$ref": "#/definitions/name" },
+        "revision": { "$ref": "#/definitions/revision" },
+        "referenceImage": { "$ref": "#/definitions/nullablePath" },
+        "canvas": { "$ref": "#/definitions/nullableSize" },
+        "origin": { "$ref": "#/definitions/nullablePoint" },
+        "baseline": { "$ref": "#/definitions/nullableBaseline" },
+        "scale": { "$ref": "#/definitions/scale" },
+        "actions": { "type": "array", "items": { "$ref": "#/definitions/action" } }
+      }
+    },
+    "migration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceFormatVersion", "sourceSequenceId", "sourceSha256", "actionId"],
+      "properties": {
+        "sourceFormatVersion": { "type": "integer", "enum": [2, 3, 4] },
+        "sourceSequenceId": { "$ref": "#/definitions/id" },
+        "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "actionId": { "$ref": "#/definitions/id" }
+      }
+    }
+  }
+}
